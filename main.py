@@ -30,49 +30,16 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    return {"message": "StudySphere Backend API is running"}
+    return {"message": "StudySphere Backend API - 3-Stage Generation"}
 
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
 
-@app.post("/api/fetch")
-async def generate_graph(request: Request):
-    try:
-        data = await request.json()
-        topic = data.get("url")  # Frontend sends "url" field
-        
-        if not topic:
-            return JSONResponse({"error": "Missing topic in 'url' field"}, status_code=400)
-       
-        print(f"[API] Generating graph for topic: {topic}")
-        
-        # Generate the graph data
-        result = get_children_nodes(topic)
-       
-        if result:
-            print(f"[API] Successfully generated graph with {len(result.get('nodes', []))} nodes")
-            return JSONResponse(result)
-        else:
-            print("[API] Failed to generate graph - get_children_nodes returned None")
-            return JSONResponse(
-                {"error": "Failed to generate graph data. The AI service may be unavailable or timed out."}, 
-                status_code=500
-            )
-   
-    except Exception as e:
-        print(f"[API] Error in generate_graph: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return JSONResponse({"error": str(e)}, status_code=500)
-
 def clean_ai_json(raw_text):
-    """
-    Remove markdown wrappers and extract valid JSON.
-    """
+    """Remove markdown wrappers and extract valid JSON."""
     raw_text = raw_text.strip()
     
-    # Remove markdown code blocks
     if raw_text.startswith("```json"):
         raw_text = raw_text[7:].strip()
     elif raw_text.startswith("```"):
@@ -80,14 +47,13 @@ def clean_ai_json(raw_text):
     if raw_text.endswith("```"):
         raw_text = raw_text[:-3].strip()
     
-    # Find the first complete JSON object
     match = re.search(r'\{[\s\S]*\}', raw_text)
     if match:
         return match.group(0)
     
     return raw_text
 
-# Load environment variables
+# Load environment
 possible_paths = [
     os.path.join(os.path.dirname(os.path.realpath(__file__)), ".env"),
     os.path.join(os.getcwd(), ".env"),
@@ -104,9 +70,7 @@ for path in possible_paths:
 if not dotenv_found:
     print("[INIT] Warning: .env file not found")
 
-# Get API key from environment
 API_KEY = os.getenv("OPENROUTER_API_KEY")
-
 if not API_KEY:
     raise ValueError("OPENROUTER_API_KEY not found")
 
@@ -115,68 +79,8 @@ print(f"[INIT] API Key configured: {API_KEY[:20]}...")
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "qwen/qwen-2.5-72b-instruct:free"
 
-def get_children_nodes(topic: str):
-    """
-    Generate nodes, links, and content for a mind map using AI.
-    Returns format compatible with frontend: single quiz object per node.
-    """
-    prompt = f"""Generate a learning mind map for the topic "{topic}".
-
-Return ONLY valid JSON (no markdown, no extra text) with this structure:
-
-{{
-  "nodes": [
-    {{"id": "node1", "label": "Main Topic", "level": 0, "unlocked": true, "quiz_completed": false}},
-    {{"id": "node2", "label": "Subtopic 1", "level": 1, "unlocked": false, "quiz_completed": false}},
-    {{"id": "node3", "label": "Subtopic 2", "level": 2, "unlocked": false, "quiz_completed": false}}
-  ],
-  "links": [
-    {{"source": "node1", "target": "node2"}},
-    {{"source": "node2", "target": "node3"}}
-  ],
-  "nodeContent": {{
-    "node1": {{
-      "content": "Write 4-5 detailed paragraphs (each 4-5 sentences) explaining this topic comprehensively. Include definition, key concepts, real-world examples, applications, challenges, and advanced context.",
-      "quiz": {{
-        "question": "What is a key characteristic of this topic?",
-        "options": ["Correct answer", "Wrong option 1", "Wrong option 2", "Wrong option 3"],
-        "answer": 0
-      }}
-    }},
-    "node2": {{
-      "content": "A3-5 parahraph detailed explanation of subtopic 2.",
-      "quiz": {{
-        "question": "Question about subtopic 1?",
-        "options": ["Option A", "Correct answer", "Option C", "Option D"],
-        "answer": 1
-      }}
-    }},
-    "node3": {{
-      "content": "3-5 parahraph detailed explanation of subtopic 3.",
-      "quiz": {{
-        "question": "Question about subtopic 2?",
-        "options": ["Option A", "Option B", "Correct answer", "Option D"],
-        "answer": 2
-      }}
-    }}
-  }}
-}}
-
-CRITICAL REQUIREMENTS:
-- Return ONLY the JSON object (no markdown, no prose)
-- Create 10-15 nodes minimum with proper hierarchy
-- Level 0 = root (unlocked: true, quiz_completed: false)
-- Level 1 nodes = unlocked: true (to allow immediate exploration)
-- Level 2, 3, 4 nodes = unlocked: false
-- MANDATORY, IF YOU DO NOT DO THIS REDO: Each "content" = 4-5 detailed paragraphs (4-5 sentences each) with examples
-- Each "quiz" = SINGLE object (NOT array) with:
-  - "question": string
-  - "options": array of 4 strings
-  - "answer": integer 0-3 (index of correct option)
-- Use short, unique IDs (e.g., "ai", "ml", "dl", not full names)
-- Ensure all node IDs match between nodes, links, and nodeContent
-"""
-
+def call_ai(prompt, max_tokens=4000):
+    """Helper function to call AI API."""
     headers = {
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json"
@@ -186,16 +90,11 @@ CRITICAL REQUIREMENTS:
         "model": MODEL,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.3,
-        "max_tokens": 28000
+        "max_tokens": max_tokens
     }
 
     try:
-        print(f"[AI] Calling OpenRouter API for topic: {topic}")
-        print(f"[AI] Model: {MODEL}")
-        
         response = requests.post(API_URL, headers=headers, json=payload, timeout=120)
-
-        print(f"[AI] Response status: {response.status_code}")
 
         if response.status_code != 200:
             print(f"[AI] API Error: {response.text}")
@@ -204,91 +103,205 @@ CRITICAL REQUIREMENTS:
         response_json = response.json()
         
         if "choices" not in response_json or len(response_json["choices"]) == 0:
-            print(f"[AI] Invalid response structure: {response_json}")
+            print(f"[AI] Invalid response structure")
             return None
             
         raw_output = response_json["choices"][0]["message"]["content"]
-        print(f"[AI] Raw response length: {len(raw_output)} chars")
-        print(f"[AI] First 200 chars: {raw_output[:200]}")
-        
-        # Clean the output
         cleaned_output = clean_ai_json(raw_output)
-        print(f"[AI] Cleaned output length: {len(cleaned_output)} chars")
        
-        # Parse JSON
         result = json.loads(cleaned_output)
-        
-        # Validate structure
-        required_keys = ["nodes", "links", "nodeContent"]
-        missing_keys = [key for key in required_keys if key not in result]
-        
-        if missing_keys:
-            print(f"[AI] Error: Missing required keys: {missing_keys}")
-            print(f"[AI] Available keys: {list(result.keys())}")
-            return None
-        
-        # Validate nodes
-        if not result["nodes"] or len(result["nodes"]) == 0:
-            print("[AI] Error: No nodes in response")
-            return None
-        
-        # Validate and fix nodeContent structure
-        for node_id, content in result["nodeContent"].items():
-            if "quiz" in content:
-                # If quiz is an array, take the first element
-                if isinstance(content["quiz"], list):
-                    print(f"[AI] Converting quiz array to single object for node: {node_id}")
-                    content["quiz"] = content["quiz"][0] if content["quiz"] else None
-                
-                # Validate quiz structure
-                if content["quiz"]:
-                    quiz = content["quiz"]
-                    if not all(key in quiz for key in ["question", "options", "answer"]):
-                        print(f"[AI] Warning: Incomplete quiz for node {node_id}")
-                    elif not isinstance(quiz["options"], list) or len(quiz["options"]) != 4:
-                        print(f"[AI] Warning: Invalid options for node {node_id}")
-                    elif not isinstance(quiz["answer"], int) or quiz["answer"] not in [0, 1, 2, 3]:
-                        print(f"[AI] Warning: Invalid answer index for node {node_id}")
-            
-        print(f"[AI] ✓ Successfully generated graph:")
-        print(f"[AI]   - {len(result['nodes'])} nodes")
-        print(f"[AI]   - {len(result['links'])} links")
-        print(f"[AI]   - {len(result['nodeContent'])} content entries")
-        
-        # Log first node's structure for debugging
-        if result['nodeContent']:
-            first_key = list(result['nodeContent'].keys())[0]
-            first_content = result['nodeContent'][first_key]
-            print(f"[AI]   - Sample node '{first_key}':")
-            print(f"[AI]     - content length: {len(first_content.get('content', ''))}")
-            print(f"[AI]     - quiz type: {type(first_content.get('quiz'))}")
-            if first_content.get('quiz'):
-                print(f"[AI]     - quiz keys: {list(first_content['quiz'].keys())}")
-        
         return result
         
     except requests.exceptions.Timeout:
-        print("[AI] Error: Request timed out after 120 seconds")
+        print("[AI] Error: Request timed out")
         return None
     except requests.exceptions.RequestException as e:
         print(f"[AI] Error: Request failed - {str(e)}")
         return None
     except json.JSONDecodeError as e:
         print(f"[AI] Error: Failed to parse JSON - {str(e)}")
-        print(f"[AI] Attempted to parse: {cleaned_output[:500]}...")
         return None
     except Exception as e:
         print(f"[AI] Unexpected error: {str(e)}")
-        import traceback
-        traceback.print_exc()
         return None
+
+# STAGE 1: Generate Structure
+@app.post("/api/generate-structure")
+async def generate_structure(request: Request):
+    try:
+        data = await request.json()
+        topic = data.get("topic")
+        
+        if not topic:
+            return JSONResponse({"error": "Missing topic"}, status_code=400)
+       
+        print(f"[STAGE 1] Generating structure for: {topic}")
+        
+        prompt = f"""Generate a learning mind map structure for "{topic}".
+
+Return ONLY valid JSON with nodes and links:
+
+{{
+  "nodes": [
+    {{"id": "root", "label": "{topic}", "level": 0, "unlocked": true, "quiz_completed": false}},
+    {{"id": "sub1", "label": "First Major Subtopic", "level": 1, "unlocked": true, "quiz_completed": false}},
+    {{"id": "sub2", "label": "Second Major Subtopic", "level": 1, "unlocked": true, "quiz_completed": false}},
+    {{"id": "detail1", "label": "Detailed Concept 1", "level": 2, "unlocked": false, "quiz_completed": false}}
+  ],
+  "links": [
+    {{"source": "root", "target": "sub1"}},
+    {{"source": "root", "target": "sub2"}},
+    {{"source": "sub1", "target": "detail1"}}
+  ]
+}}
+
+REQUIREMENTS:
+- Create 10-15 nodes total
+- Level 0 = 1 root node (unlocked: true)
+- Level 1 = 3-5 main subtopics (unlocked: true)
+- Level 2-3 = detailed concepts (unlocked: false)
+- Use short IDs (max 10 chars)
+- Clear, specific labels
+- Logical hierarchy
+- Return ONLY JSON"""
+
+        result = call_ai(prompt, max_tokens=3000)
+        
+        if not result or "nodes" not in result or "links" not in result:
+            return JSONResponse({"error": "Failed to generate structure"}, status_code=500)
+        
+        print(f"[STAGE 1] ✓ Generated {len(result['nodes'])} nodes, {len(result['links'])} links")
+        return JSONResponse(result)
+   
+    except Exception as e:
+        print(f"[STAGE 1] Error: {str(e)}")
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+# STAGE 2: Generate Content
+@app.post("/api/generate-content")
+async def generate_content(request: Request):
+    try:
+        data = await request.json()
+        topic = data.get("topic")
+        nodes = data.get("nodes")
+        
+        if not topic or not nodes:
+            return JSONResponse({"error": "Missing topic or nodes"}, status_code=400)
+       
+        print(f"[STAGE 2] Generating content for {len(nodes)} nodes")
+        
+        # Get first 5 nodes for content generation
+        node_list = "\n".join([f"- {n['id']}: {n['label']}" for n in nodes[:10]])
+        
+        prompt = f"""Write detailed educational content for these topics about "{topic}":
+
+{node_list}
+
+Return ONLY valid JSON:
+
+{{
+  "nodeContent": {{
+    "node_id": "4-6 paragraphs of detailed, informative content. Each paragraph should be 4-5 sentences. Cover: definition, key concepts, real-world examples, applications, current challenges, and advanced context. Be thorough and educational.",
+    "another_id": "Similarly detailed content..."
+  }}
+}}
+
+CRITICAL:
+- Each entry = 4-6 full paragraphs
+- Each paragraph = 4-5 complete sentences
+- Be specific, detailed, and educational
+- Include examples and applications
+- Return ONLY JSON"""
+
+        result = call_ai(prompt, max_tokens=8000)
+        
+        if not result or "nodeContent" not in result:
+            return JSONResponse({"error": "Failed to generate content"}, status_code=500)
+        
+        print(f"[STAGE 2] ✓ Generated content for {len(result['nodeContent'])} nodes")
+        return JSONResponse(result)
+   
+    except Exception as e:
+        print(f"[STAGE 2] Error: {str(e)}")
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+# STAGE 3: Generate Quizzes
+@app.post("/api/generate-quizzes")
+async def generate_quizzes(request: Request):
+    try:
+        data = await request.json()
+        topic = data.get("topic")
+        nodes = data.get("nodes")
+        content = data.get("content", {})
+        
+        if not topic or not nodes:
+            return JSONResponse({"error": "Missing topic or nodes"}, status_code=400)
+       
+        print(f"[STAGE 3] Generating quizzes for {len(nodes)} nodes")
+        
+        # Generate quiz info for each node
+        node_info = "\n".join([
+            f"- {n['id']}: {n['label']}"
+            for n in nodes[:10]
+        ])
+        
+        prompt = f"""Create comprehension quiz questions for these topics about "{topic}":
+
+{node_info}
+
+Return ONLY valid JSON:
+
+{{
+  "nodeQuizzes": {{
+    "node_id": {{
+      "question": "A thoughtful comprehension question about this topic",
+      "options": [
+        "Correct answer (detailed and specific)",
+        "Plausible wrong answer 1",
+        "Plausible wrong answer 2",
+        "Plausible wrong answer 3"
+      ],
+      "answer": 0
+    }},
+    "another_id": {{
+      "question": "Another comprehension question...",
+      "options": ["...", "...", "...", "..."],
+      "answer": 1
+    }}
+  }}
+}}
+
+REQUIREMENTS:
+- Each quiz = single object (NOT array)
+- Questions test understanding (not memorization)
+- All options should be plausible
+- Mix up correct answer position (0, 1, 2, or 3)
+- Return ONLY JSON"""
+
+        result = call_ai(prompt, max_tokens=6000)
+        
+        if not result or "nodeQuizzes" not in result:
+            return JSONResponse({"error": "Failed to generate quizzes"}, status_code=500)
+        
+        # Validate quiz structure
+        for node_id, quiz in result["nodeQuizzes"].items():
+            if isinstance(quiz, list):
+                result["nodeQuizzes"][node_id] = quiz[0] if quiz else {}
+        
+        print(f"[STAGE 3] ✓ Generated quizzes for {len(result['nodeQuizzes'])} nodes")
+        return JSONResponse(result)
+   
+    except Exception as e:
+        print(f"[STAGE 3] Error: {str(e)}")
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 if __name__ == "__main__":
     import uvicorn
     print("="*60)
-    print("Starting StudySphere Backend Server")
+    print("StudySphere Backend - 3-Stage Generation")
     print("="*60)
-    print(f"CORS enabled for: {', '.join(origins)}")
-    print(f"API Key: {API_KEY[:20]}...")
+    print("Stage 1: /api/generate-structure")
+    print("Stage 2: /api/generate-content")
+    print("Stage 3: /api/generate-quizzes")
     print("="*60)
     uvicorn.run(app, host="0.0.0.0", port=8000)
