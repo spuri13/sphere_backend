@@ -16,8 +16,8 @@ origins = [
     "https://hackpsu-ndvo95ani-aaravdaga-5997s-projects.vercel.app",
     "https://hackpsu-aaravdaga-5997s-projects.vercel.app",
     "https://hackpsu-aj1y0cag4-aaravdaga-5997s-projects.vercel.app",
-    "hackpsu-git-main-aaravdaga-5997s-projects.vercel.app",
-    "hackpsu-h24rl23wb-aaravdaga-5997s-projects.vercel.app",
+    "https://hackpsu-git-main-aaravdaga-5997s-projects.vercel.app",
+    "https://hackpsu-h24rl23wb-aaravdaga-5997s-projects.vercel.app",
     "http://localhost:3000",
     "http://localhost:5173",
 ]
