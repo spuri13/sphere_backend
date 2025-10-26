@@ -37,7 +37,7 @@ async def health():
     return {"status": "healthy"}
 
 def clean_ai_json(raw_text):
-    """Remove markdown wrappers and extract valid JSON."""
+    """Remove markdown wrappers and extract valid JSON with aggressive cleaning."""
     raw_text = raw_text.strip()
     
     # Remove markdown code blocks
@@ -53,41 +53,26 @@ def clean_ai_json(raw_text):
     if match:
         raw_text = match.group(0)
     
-    # Fix escape sequences that break JSON
-    # Replace invalid escape sequences with safe alternatives
-    raw_text = raw_text.replace('\\n', ' ')  # newlines in strings
-    raw_text = raw_text.replace('\\t', ' ')  # tabs in strings
+    # Step 1: Replace common problematic escape sequences
+    raw_text = raw_text.replace('\\n', ' ')  # newlines
+    raw_text = raw_text.replace('\\t', ' ')  # tabs
     raw_text = raw_text.replace('\\r', ' ')  # carriage returns
     
-    # Fix improperly escaped quotes
-    # But preserve properly escaped quotes in JSON structure
-    lines = raw_text.split('\n')
-    fixed_lines = []
-    for line in lines:
-        # Only fix escapes within string values (after : and before comma/})
-        if '": "' in line:
-            # Split on the value portion
-            parts = line.split('": "', 1)
-            if len(parts) == 2:
-                prefix = parts[0] + '": "'
-                value_and_rest = parts[1]
-                
-                # Find where the string value ends
-                end_quote_idx = value_and_rest.rfind('"')
-                if end_quote_idx > 0:
-                    value = value_and_rest[:end_quote_idx]
-                    rest = value_and_rest[end_quote_idx:]
-                    
-                    # Remove invalid escapes from the value
-                    value = value.replace("\\'", "'")
-                    value = value.replace('\\"', '"')
-                    value = re.sub(r'\\([^"\\/bfnrtu])', r'\1', value)  # Remove other invalid escapes
-                    
-                    line = prefix + value + rest
-        
-        fixed_lines.append(line)
+    # Step 2: Fix escaped quotes and apostrophes in content
+    # This regex finds string values and removes invalid escapes
+    def fix_string_value(match):
+        value = match.group(1)
+        # Remove invalid escape sequences but keep valid JSON escapes
+        value = value.replace("\\'", "'")
+        value = value.replace('\\"', '"')
+        # Remove any other backslash that's not followed by valid JSON escape chars
+        value = re.sub(r'\\(?!["\\/bfnrtu])', '', value)
+        return f'"{value}"'
     
-    return '\n'.join(fixed_lines)
+    # Apply to all string values in JSON
+    raw_text = re.sub(r':\s*"([^"]*(?:\\.[^"]*)*)"', lambda m: f': {fix_string_value(m)}', raw_text)
+    
+    return raw_text
 
 # Load environment
 possible_paths = [
@@ -115,8 +100,8 @@ print(f"[INIT] API Key configured: {API_KEY[:20]}...")
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "qwen/qwen-2.5-72b-instruct:free"
 
-def call_ai(prompt, max_tokens=15000):
-    """Helper function to call AI API."""
+def call_ai(prompt, max_tokens=4000):
+    """Helper function to call AI API with robust error handling."""
     headers = {
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json"
@@ -130,7 +115,7 @@ def call_ai(prompt, max_tokens=15000):
     }
 
     try:
-        response = requests.post(API_URL, headers=headers, json=payload, timeout=120)
+        response = requests.post(API_URL, headers=headers, json=payload, timeout=90)
 
         if response.status_code != 200:
             print(f"[AI] API Error: {response.text}")
@@ -143,22 +128,45 @@ def call_ai(prompt, max_tokens=15000):
             return None
             
         raw_output = response_json["choices"][0]["message"]["content"]
+        print(f"[AI] Raw response length: {len(raw_output)} chars")
+        
         cleaned_output = clean_ai_json(raw_output)
+        print(f"[AI] Cleaned output preview (first 200): {cleaned_output[:200]}...")
        
-        result = json.loads(cleaned_output)
-        return result
+        try:
+            result = json.loads(cleaned_output)
+            print("[AI] ✓ JSON parsed successfully")
+            return result
+        except json.JSONDecodeError as parse_error:
+            print(f"[AI] JSON parse failed: {parse_error.msg} at position {parse_error.pos}")
+            
+            # Show problematic area
+            start = max(0, parse_error.pos - 150)
+            end = min(len(cleaned_output), parse_error.pos + 150)
+            print(f"[AI] Problem area: ...{cleaned_output[start:end]}...")
+            
+            # Try ultra-aggressive cleaning - remove ALL backslashes
+            print("[AI] Attempting ultra-aggressive cleaning...")
+            ultra_clean = cleaned_output.replace('\\', '')
+            
+            try:
+                result = json.loads(ultra_clean)
+                print("[AI] ✓ Recovered with ultra-aggressive cleaning")
+                return result
+            except:
+                print("[AI] ✗ Ultra-aggressive cleaning failed")
+                return None
         
     except requests.exceptions.Timeout:
-        print("[AI] Error: Request timed out")
+        print("[AI] Error: Request timed out after 90 seconds")
         return None
     except requests.exceptions.RequestException as e:
         print(f"[AI] Error: Request failed - {str(e)}")
         return None
-    except json.JSONDecodeError as e:
-        print(f"[AI] Error: Failed to parse JSON - {str(e)}")
-        return None
     except Exception as e:
         print(f"[AI] Unexpected error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return None
 
 # STAGE 1: Generate Structure
@@ -173,9 +181,10 @@ async def generate_structure(request: Request):
        
         print(f"[STAGE 1] Generating structure for: {topic}")
         
-        prompt = f"""Generate a learning mind map structure for "{topic}".
+        prompt = f"""Generate a learning mind map structure for {topic}.
 
-Return ONLY valid JSON with nodes and links:
+Return ONLY valid JSON with nodes and links.
+IMPORTANT: Do NOT use any backslashes in your response.
 
 {{
   "nodes": [
@@ -199,9 +208,9 @@ REQUIREMENTS:
 - Use short IDs (max 10 chars)
 - Clear, specific labels
 - Logical hierarchy
-- Return ONLY JSON"""
+- NO backslashes anywhere"""
 
-        result = call_ai(prompt, max_tokens=15000)
+        result = call_ai(prompt, max_tokens=3000)
         
         if not result or "nodes" not in result or "links" not in result:
             return JSONResponse({"error": "Failed to generate structure"}, status_code=500)
@@ -226,33 +235,48 @@ async def generate_content(request: Request):
        
         print(f"[STAGE 2] Generating content for {len(nodes)} nodes")
         
-        # Get first 5 nodes for content generation
+        # Get first 10 nodes for content generation
         node_list = "\n".join([f"- {n['id']}: {n['label']}" for n in nodes[:10]])
         
-        prompt = f"""Write detailed educational content for these topics about "{topic}":
+        prompt = f"""Write educational content for these topics about {topic}:
 
 {node_list}
 
-Return ONLY valid JSON:
+CRITICAL INSTRUCTIONS:
+1. Return ONLY a valid JSON object
+2. Do NOT use backslashes anywhere in your response
+3. Use plain apostrophes and quotes without escaping
+4. Use simple language without special characters
+5. Each content entry should be 4-6 paragraphs
+6. Each paragraph should be 4-5 sentences
 
+Example format:
 {{
   "nodeContent": {{
-    "node_id": "4-6 paragraphs of detailed, informative content. Each paragraph should be 4-5 sentences. Cover: definition, key concepts, real-world examples, applications, current challenges, and advanced context. Be thorough and educational.",
-    "another_id": "Similarly detailed content..."
+    "node_id": "First paragraph about the concept. It explains the basics clearly. Second paragraph with real examples from everyday life. Third paragraph about practical applications and uses. Fourth paragraph with more detailed information and context.",
+    "another_id": "Content here written in plain text without any backslashes or special escape sequences. Use regular apostrophes and quotes."
   }}
 }}
 
-CRITICAL:
-- Each entry = 4-6 full paragraphs
-- Each paragraph = 4-5 complete sentences
-- Be specific, detailed, and educational
-- Include examples and applications
-- Return ONLY JSON"""
+Remember: NO backslashes, NO escape sequences, just plain text in proper JSON format."""
 
-        result = call_ai(prompt, max_tokens=15000)
+        result = call_ai(prompt, max_tokens=8000)
+        
+        if not result:
+            # Retry with even simpler prompt
+            print("[STAGE 2] Retrying with simplified prompt...")
+            simple_prompt = f"""Generate content about {topic} for: {node_list}
+
+Return valid JSON with NO backslashes:
+
+{{"nodeContent": {{"node_id": "Plain text content with 3-4 paragraphs. Use simple apostrophes. No special characters.", "other_id": "More content..."}}}}
+
+Use only plain text."""
+            
+            result = call_ai(simple_prompt, max_tokens=6000)
         
         if not result or "nodeContent" not in result:
-            return JSONResponse({"error": "Failed to generate content"}, status_code=500)
+            return JSONResponse({"error": "Failed to generate content after retry"}, status_code=500)
         
         print(f"[STAGE 2] ✓ Generated content for {len(result['nodeContent'])} nodes")
         return JSONResponse(result)
@@ -281,18 +305,24 @@ async def generate_quizzes(request: Request):
             for n in nodes[:10]
         ])
         
-        prompt = f"""Create comprehension quiz questions for these topics about "{topic}":
+        prompt = f"""Create comprehension quiz questions for these topics about {topic}:
 
 {node_info}
 
-Return ONLY valid JSON:
+CRITICAL INSTRUCTIONS:
+1. Return ONLY valid JSON
+2. Do NOT use any backslashes in your response
+3. Use plain text without escape characters
+4. Write questions and answers in simple clear language
+
+Return this exact format:
 
 {{
   "nodeQuizzes": {{
     "node_id": {{
-      "question": "A thoughtful comprehension question about this topic",
+      "question": "A clear question about this topic without any special characters",
       "options": [
-        "Correct answer (detailed and specific)",
+        "Correct answer with details",
         "Plausible wrong answer 1",
         "Plausible wrong answer 2",
         "Plausible wrong answer 3"
@@ -300,29 +330,47 @@ Return ONLY valid JSON:
       "answer": 0
     }},
     "another_id": {{
-      "question": "Another comprehension question...",
-      "options": ["...", "...", "...", "..."],
-      "answer": 1
+      "question": "Another question in plain text",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "answer": 2
     }}
   }}
 }}
 
 REQUIREMENTS:
-- Each quiz = single object (NOT array)
-- Questions test understanding (not memorization)
+- Each quiz is a single object (NOT an array)
+- Questions test understanding
 - All options should be plausible
 - Mix up correct answer position (0, 1, 2, or 3)
-- Return ONLY JSON"""
+- Use plain text only, no backslashes or escape characters
+- Return ONLY the JSON object"""
 
-        result = call_ai(prompt, max_tokens=15000)
+        result = call_ai(prompt, max_tokens=6000)
+        
+        if not result:
+            # Retry with simpler prompt
+            print("[STAGE 3] Retrying with simplified prompt...")
+            simple_prompt = f"""Create quiz questions for {topic} topics: {node_info}
+
+Return valid JSON without backslashes:
+
+{{"nodeQuizzes": {{"node_id": {{"question": "Simple question", "options": ["A", "B", "C", "D"], "answer": 0}}, "other_id": {{"question": "Another question", "options": ["A", "B", "C", "D"], "answer": 1}}}}}}
+
+Use plain text only."""
+            
+            result = call_ai(simple_prompt, max_tokens=4000)
         
         if not result or "nodeQuizzes" not in result:
-            return JSONResponse({"error": "Failed to generate quizzes"}, status_code=500)
+            return JSONResponse({"error": "Failed to generate quizzes after retry"}, status_code=500)
         
-        # Validate quiz structure
+        # Validate quiz structure - ensure each quiz is an object, not array
         for node_id, quiz in result["nodeQuizzes"].items():
             if isinstance(quiz, list):
-                result["nodeQuizzes"][node_id] = quiz[0] if quiz else {}
+                result["nodeQuizzes"][node_id] = quiz[0] if quiz else {
+                    "question": "Test question",
+                    "options": ["A", "B", "C", "D"],
+                    "answer": 0
+                }
         
         print(f"[STAGE 3] ✓ Generated quizzes for {len(result['nodeQuizzes'])} nodes")
         return JSONResponse(result)
