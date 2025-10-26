@@ -9,14 +9,14 @@ import requests
 app = FastAPI()
 
 # Fixed CORS middleware with your actual domain
+origins = [
+    "https://hackpsu-five.vercel.app",
+    "http://localhost:3000",  # for local dev
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://hackpsu-five.vercel.app",
-        "https://hackpsu-k37pea2n2-aaravdaga-5997s-projects.vercel.app",
-        "http://localhost:3000",  # For local development
-        "http://localhost:5173",  # For Vite dev server
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -112,7 +112,7 @@ for path in possible_paths:
 if not dotenv_found:
     print("Warning: .env file not found. Make sure it exists in the script folder or cwd.")
 
-API_KEY = os.getenv("OPENROUTER_API_KEY")
+API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 if not API_KEY:
     raise ValueError(
         "OPENROUTER_API_KEY not found. Ensure your .env contains:\nOPENROUTER_API_KEY=your_key_here"
