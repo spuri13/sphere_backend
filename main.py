@@ -111,7 +111,7 @@ if not API_KEY:
 print(f"[INIT] API Key configured: {API_KEY[:20]}...")
 
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
-MODEL = "meta-llama/llama-3.3-8b-instruct:free"
+MODEL = "mistralai/mistral-small-3.2-24b-instruct:free"
 
 def get_children_nodes(topic: str):
     """
@@ -119,57 +119,113 @@ def get_children_nodes(topic: str):
     """
     prompt = f"""Generate a learning mind map for the topic "{topic}".
 
-Return ONLY a valid JSON object (no markdown, no explanations) with this exact structure:
+Return ONLY a valid JSON object (no markdown, no explanations) with this exact structure, but replacing the example content with content about the given topic:
 
-{{
+{
   "nodes": [
-    {{"id": "node1", "label": "Main Topic", "level": 0, "unlocked": true, "quiz_completed": false}},
-    {{"id": "node2", "label": "Subtopic 1", "level": 1, "unlocked": true, "quiz_completed": false}},
-    {{"id": "node3", "label": "Subtopic 2", "level": 2, "unlocked": false, "quiz_completed": false}}
+    {"id": "PS", "label": "Photosynthesis", "level": 0, "unlocked": true, "quiz_completed": false},
+    {"id": "LightReactions", "label": "Light Reactions", "level": 1, "unlocked": false, "quiz_completed": false},
+    {"id": "CalvinCycle", "label": "Calvin Cycle", "level": 1, "unlocked": false, "quiz_completed": false},
+    {"id": "Chloroplast", "label": "Chloroplast Structure", "level": 2, "unlocked": false, "quiz_completed": false},
+    {"id": "Pigments", "label": "Photosynthetic Pigments", "level": 2, "unlocked": false, "quiz_completed": false},
+    {"id": "ATP", "label": "ATP and Energy Conversion", "level": 2, "unlocked": false, "quiz_completed": false},
+    {"id": "Factors", "label": "Factors Affecting Photosynthesis", "level": 2, "unlocked": false, "quiz_completed": false},
+    {"id": "Adaptations", "label": "C3, C4, and CAM Adaptations", "level": 3, "unlocked": false, "quiz_completed": false}
   ],
   "links": [
-    {{"source": "node1", "target": "node2"}},
-    {{"source": "node2", "target": "node3"}}
+    {"source": "PS", "target": "LightReactions"},
+    {"source": "PS", "target": "CalvinCycle"},
+    {"source": "LightReactions", "target": "Chloroplast"},
+    {"source": "LightReactions", "target": "Pigments"},
+    {"source": "CalvinCycle", "target": "ATP"},
+    {"source": "PS", "target": "Factors"},
+    {"source": "PS", "target": "Adaptations"}
   ],
-  "nodeContent": {{
-    "node1": {{
-      "content": "Detailed explanation about the main topic (2-3 sentences covering key concepts, examples, and applications).",
-      "quiz": {{
-        "question": "What is a key characteristic of this topic?",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
+  "nodeContent": {
+    "PS": {
+      "content": "Photosynthesis is the biochemical process through which green plants, algae, and some bacteria convert light energy into chemical energy. It occurs primarily in the chloroplasts of plant cells, where light energy is absorbed by pigments like chlorophyll. The process uses water and carbon dioxide to produce glucose and oxygen, making it the foundation of most ecosystems.\n\nAt the molecular level, photosynthesis involves two major stages: the light-dependent reactions and the light-independent reactions, commonly known as the Calvin cycle. The light reactions capture sunlight and convert it into ATP and NADPH, while the Calvin cycle uses those products to fix carbon dioxide into glucose.\n\nBeyond its biochemical importance, photosynthesis regulates Earth’s atmosphere and drives the global carbon cycle. By sequestering carbon dioxide, plants act as natural climate stabilizers. Modern scientists also study artificial photosynthesis systems as a way to generate clean energy by mimicking this natural process.",
+      "quiz": {
+        "question": "What are the two major stages of photosynthesis?",
+        "options": ["Light and dark reactions", "Photosystem I and II", "Krebs cycle and glycolysis", "Fermentation and respiration"],
         "answer": 0
-      }}
-    }},
-    "node2": {{
-      "content": "Detailed explanation about subtopic 1.",
-      "quiz": {{
-        "question": "Question about subtopic 1?",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
+      }
+    },
+    "LightReactions": {
+      "content": "The light reactions of photosynthesis occur in the thylakoid membranes of chloroplasts and are the first stage of energy conversion. When sunlight hits chlorophyll molecules, it excites electrons that travel through an electron transport chain involving Photosystem II and Photosystem I. This flow generates ATP and NADPH, two high-energy molecules used later in the Calvin cycle.\n\nWater molecules are split during photolysis, releasing oxygen as a byproduct and replenishing electrons lost by chlorophyll. The energy released as electrons move along the transport chain drives the pumping of protons into the thylakoid lumen, creating a proton gradient used to synthesize ATP through chemiosmosis.\n\nThese reactions are dependent on light intensity, pigment availability, and the integrity of photosystems. They effectively convert light energy into usable chemical energy, setting the stage for glucose synthesis in the next phase.",
+      "quiz": {
+        "question": "What are the main products of the light reactions?",
+        "options": ["ATP and NADPH", "Glucose and oxygen", "CO2 and water", "Pyruvate and acetyl-CoA"],
         "answer": 0
-      }}
-    }},
-    "node3": {{
-      "content": "Detailed explanation about subtopic 2.",
-      "quiz": {{
-        "question": "Question about subtopic 2?",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
+      }
+    },
+    "CalvinCycle": {
+      "content": "The Calvin cycle, also called the dark or light-independent reactions, is the process by which plants convert carbon dioxide into glucose. It takes place in the stroma of the chloroplast and uses the ATP and NADPH generated from the light reactions as energy sources.\n\nThe cycle begins with the enzyme RuBisCO fixing CO2 into a five-carbon compound called RuBP, forming an unstable six-carbon molecule that quickly splits into two three-carbon molecules of 3-phosphoglycerate. These are then reduced and rearranged to form glucose precursors.\n\nThe Calvin cycle is essential for the biosynthesis of carbohydrates and other organic molecules. Its rate can be affected by temperature, CO2 concentration, and light indirectly, since ATP and NADPH production depend on it.",
+      "quiz": {
+        "question": "What enzyme catalyzes the first step of the Calvin cycle?",
+        "options": ["RuBisCO", "ATP synthase", "Chlorophyll", "Cytochrome oxidase"],
         "answer": 0
-      }}
-    }}
-  }}
-}}
+      }
+    },
+    "Chloroplast": {
+      "content": "Chloroplasts are double-membraned organelles that serve as the site of photosynthesis in plants and algae. Inside them, the thylakoid membranes house the pigments and protein complexes needed for capturing light energy.\n\nThe arrangement of thylakoids into stacks called grana maximizes surface area for light absorption. The stroma, the fluid-filled space surrounding the grana, is where the Calvin cycle reactions occur. This compartmentalization ensures the efficient coordination of energy capture and sugar synthesis.\n\nChloroplasts evolved from ancient cyanobacteria through endosymbiosis, as suggested by their own DNA and ribosomes. Their structure reflects billions of years of evolutionary refinement to maximize energy efficiency.",
+      "quiz": {
+        "question": "Where in the chloroplast does the Calvin cycle occur?",
+        "options": ["Stroma", "Thylakoid membrane", "Grana", "Inner membrane"],
+        "answer": 0
+      }
+    },
+    "Pigments": {
+      "content": "Photosynthetic pigments absorb light energy for use in photosynthesis. Chlorophyll a is the main pigment responsible for absorbing light primarily in the blue and red regions of the spectrum. Chlorophyll b and accessory pigments such as carotenoids broaden the range of absorbable light.\n\nEach pigment has a distinct absorption spectrum, and together they enable plants to harvest energy efficiently under varying light conditions. The light absorbed is transferred to reaction centers in the photosystems where it drives electron excitation.\n\nCarotenoids also serve as photoprotective agents, preventing oxidative damage by dissipating excess energy. The diversity of pigments contributes to the adaptability of photosynthetic organisms to different light environments.",
+      "quiz": {
+        "question": "Which pigment is the primary light absorber in photosynthesis?",
+        "options": ["Chlorophyll a", "Carotenoid", "Xanthophyll", "Chlorophyll b"],
+        "answer": 0
+      }
+    },
+    "ATP": {
+      "content": "ATP (adenosine triphosphate) acts as the universal energy currency of the cell. During the light reactions, ATP is produced through photophosphorylation driven by a proton gradient across the thylakoid membrane.\n\nThe enzyme ATP synthase catalyzes the formation of ATP from ADP and inorganic phosphate as protons flow back into the stroma. This ATP then powers various biosynthetic reactions, including those in the Calvin cycle where glucose is assembled.\n\nATP links the two stages of photosynthesis by carrying energy harvested from light into carbon fixation processes, ensuring a seamless flow of energy within the chloroplast.",
+      "quiz": {
+        "question": "What enzyme synthesizes ATP during photosynthesis?",
+        "options": ["ATP synthase", "RuBisCO", "Cytochrome b6f", "Ferredoxin"],
+        "answer": 0
+      }
+    },
+    "Factors": {
+      "content": "Several environmental factors influence the rate of photosynthesis. Light intensity affects the number of photons available to excite electrons in the chlorophyll molecules. Carbon dioxide concentration directly determines how much carbon can be fixed in the Calvin cycle.\n\nTemperature impacts enzymatic activity, especially that of RuBisCO, which has an optimal operating range. Extremely high or low temperatures can reduce photosynthetic efficiency.\n\nWater availability is also critical, as water is both a reactant and a medium for nutrient transport. Stress from drought or pollution can cause stomata to close, limiting CO2 uptake and slowing down photosynthesis.",
+      "quiz": {
+        "question": "Which of the following does NOT directly affect photosynthesis?",
+        "options": ["Sound frequency", "CO2 concentration", "Light intensity", "Temperature"],
+        "answer": 0
+      }
+    },
+    "Adaptations": {
+      "content": "Different plants have evolved adaptations to optimize photosynthesis under diverse environmental conditions. C3 plants, which include most temperate crops, use the Calvin cycle directly. They are efficient under moderate light and temperature but lose efficiency under hot conditions due to photorespiration.\n\nC4 plants such as maize minimize photorespiration by spatially separating carbon fixation and the Calvin cycle in different cell types. This allows them to thrive in high light and temperature environments.\n\nCAM plants, including many succulents, temporally separate CO2 uptake and fixation by opening stomata at night. This adaptation minimizes water loss, allowing survival in arid habitats while maintaining photosynthetic productivity.",
+      "quiz": {
+        "question": "What is a key adaptation of CAM plants?",
+        "options": ["They open stomata at night", "They lack chloroplasts", "They fix nitrogen instead of carbon", "They do not use the Calvin cycle"],
+        "answer": 0
+      }
+    }
+  }
+}
+
 
 Requirements:
-- Create 8-10 nodes minimum
-- Level 0 is the root (unlocked: true)
-- Level 1 nodes should be unlocked: true
-- Level 2 nodes should be unlocked: false
-- Level 3 nodes should be unlocked: false
-- Level 4 nodes should be unlocked: false
-- Level 5+ nodes should be unlocked: false
-- Each node needs content (several deeply informative paragraphs about the topic) and quiz (question with 4 options)
-- Answer must be integer 0-3 (index of correct option)
-- Return ONLY the JSON object, no other text"""
+- Return ONLY valid JSON (no markdown, no prose before/after)
+- Include 8–10 nodes minimum
+- Level 0 = root (unlocked: true)
+- Level 1 nodes = unlocked: false
+- Levels 2, 3, 4, and/or 5 = unlocked: false
+- Each node’s "content" must have AT LEAST **4 detailed paragraphs** (each 4–5 sentences) that:
+  - Explain the subtopic clearly
+  - Include examples or applications
+  - Offer advanced context or nuances
+- Each node must include a "quiz" object with:
+  - one comprehension-style question
+  - four plausible multiple-choice options
+  - "answer" = index (0–3) of correct choice
+
+"""
 
     headers = {
         "Authorization": f"Bearer {API_KEY}",
@@ -179,8 +235,8 @@ Requirements:
     payload = {
         "model": MODEL,
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.6,
-        "max_tokens": 4000
+        "temperature": 0.2,
+        "max_tokens": 400000
     }
 
     try:
