@@ -103,7 +103,7 @@ if not dotenv_found:
     print("[INIT] Warning: .env file not found")
 
 # Get API key from environment or hardcoded fallback
-API_KEY = os.getenv("OPENROUTER_API_KEY", "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")
+API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 if not API_KEY:
     raise ValueError("OPENROUTER_API_KEY not found")
