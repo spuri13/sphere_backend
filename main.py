@@ -346,7 +346,7 @@ Requirements:
         "model": MODEL,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.2,
-        "max_tokens": 400000
+        "max_tokens": 131072
     }
 
     try:
