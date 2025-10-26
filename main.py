@@ -8,37 +8,62 @@ import requests
 
 app = FastAPI()
 
-# Add CORS middleware
+# Fixed CORS middleware with your actual domain
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend domain
+    allow_origins=[
+        "https://hackpsu-five.vercel.app",
+        "https://hackpsu-k37pea2n2-aaravdaga-5997s-projects.vercel.app",
+        "http://localhost:3000",  # For local development
+        "http://localhost:5173",  # For Vite dev server
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.post("/api/data")
+@app.get("/")
+async def root():
+    return {"message": "StudySphere Backend API is running"}
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy"}
+
+# Main endpoint - matches frontend call to /api/fetch
+@app.post("/api/fetch")
 async def generate_graph(request: Request):
-    data = await request.json()
-    topic = data.get("url")  # Using "url" to match your current frontend
-    if not topic:
-        return JSONResponse({"error": "Missing topic"}, status_code=400)
-   
     try:
-        # Generate the graph data using your existing function
+        data = await request.json()
+        topic = data.get("url")  # Frontend sends "url" field containing the topic
+        
+        if not topic:
+            return JSONResponse({"error": "Missing topic"}, status_code=400)
+       
+        print(f"Generating graph for topic: {topic}")
+        
+        # Generate the graph data
         result = get_children_nodes(topic)
        
         if result:
-            # Save to JSON file (optional)
+            # Optional: Save to JSON file
             output_file = f"graph_{topic.replace(' ', '_')}.json"
-            with open(output_file, 'w') as f:
-                json.dump(result, f, indent=2)
+            try:
+                with open(output_file, 'w') as f:
+                    json.dump(result, f, indent=2)
+                print(f"Saved graph to {output_file}")
+            except Exception as e:
+                print(f"Warning: Could not save to file: {e}")
            
             return JSONResponse(result)
         else:
-            return JSONResponse({"error": "Failed to generate graph data"}, status_code=500)
+            return JSONResponse(
+                {"error": "Failed to generate graph data from AI"}, 
+                status_code=500
+            )
    
     except Exception as e:
+        print(f"Error in generate_graph: {str(e)}")
         return JSONResponse({"error": str(e)}, status_code=500)
 
 @app.post("/api/info")
@@ -61,14 +86,16 @@ def clean_ai_json(raw_text):
     """
     Remove ```json and ``` wrappers if present.
     """
+    raw_text = raw_text.strip()
     if raw_text.startswith("```json"):
         raw_text = raw_text[len("```json"):].strip()
-    if raw_text.startswith("```"):
+    elif raw_text.startswith("```"):
         raw_text = raw_text[3:].strip()
     if raw_text.endswith("```"):
         raw_text = raw_text[:-3].strip()
     return raw_text
 
+# Load environment variables
 possible_paths = [
     os.path.join(os.path.dirname(os.path.realpath(__file__)), ".env"),
     os.path.join(os.getcwd(), ".env"),  
@@ -94,15 +121,15 @@ if not API_KEY:
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "deepseek/deepseek-chat-v3.1:free"
 
-def get_children_nodes(topic: str, parent_id="root", parent_level=0):
+def get_children_nodes(topic: str):
     """
-    Given a topic, generate 3 child subtopics as nodes and edges for a mind map.
-    Returns a dictionary with 'nodes' and 'edges'.
+    Given a topic, generate nodes, links, and content for a mind map.
+    Returns a dictionary with 'nodes', 'links', and 'nodeContent'.
     """
     prompt = f"""
 You are a helpful and knowledgeable study assistant generating detailed structured learning mind maps.
 
-Given the topic "{topic}", create a **comprehensive JSON** that captures the topic hierarchy, in-depth content explanations, and multiple quiz questions for each subtopic.
+Given the topic "{topic}", create a **comprehensive JSON** that captures the topic hierarchy, in-depth content explanations, and quiz questions for each subtopic.
 
 Follow this exact structure — output only valid JSON, without Markdown or extra text:
 
@@ -136,179 +163,55 @@ Follow this exact structure — output only valid JSON, without Markdown or extr
   ],
   "nodeContent": {{
     "AI": {{
-      "content": "Write an in-depth explanation of Artificial Intelligence (AI) that covers its definition, core goals, types (narrow vs general), real-world examples, ethical considerations, and current challenges in research. The paragraph should be comprehensive and informative.",
-      "quiz": [
-        {{
-          "question": "What distinguishes narrow AI from general AI?",
-          "options": [
-            "Narrow AI focuses on specific tasks; general AI performs any cognitive task",
-            "General AI is weaker than narrow AI",
-            "Narrow AI includes emotions",
-            "General AI only exists in theory"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "Which of the following is an example of AI in everyday use?",
-          "options": [
-            "Voice assistants like Siri and Alexa",
-            "Manual typewriters",
-            "Analog clocks",
-            "Vacuum tubes"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "What is one key ethical issue in AI?",
-          "options": [
-            "Lack of creativity",
-            "Job displacement and bias",
-            "Slow computation",
-            "Overuse of electricity"
-          ],
-          "answer": 1
-        }},
-        {{
-          "question": "Which subfield of AI focuses on decision-making and learning from data?",
-          "options": [
-            "Machine Learning",
-            "Cryptography",
-            "Quantum Computing",
-            "Network Security"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "What is a primary challenge in creating general AI?",
-          "options": [
-            "Building machines that understand and reason like humans",
-            "Improving computer graphics",
-            "Reducing hardware costs",
-            "Translating code to multiple languages"
-          ],
-          "answer": 0
-        }}
-      ]
+      "content": "Artificial Intelligence (AI) is the simulation of human intelligence in machines. It encompasses narrow AI (task-specific systems like voice assistants) and general AI (hypothetical human-level intelligence). AI powers everyday tools like Siri and Alexa, recommendation systems, and autonomous vehicles. Key challenges include ethical concerns like bias and job displacement, privacy issues, and the difficulty of creating systems that can reason and understand context like humans.",
+      "quiz": {{
+        "question": "What distinguishes narrow AI from general AI?",
+        "options": [
+          "Narrow AI focuses on specific tasks; general AI performs any cognitive task",
+          "General AI is weaker than narrow AI",
+          "Narrow AI includes emotions",
+          "General AI only exists in theory"
+        ],
+        "answer": 0
+      }}
     }},
     "ML": {{
-      "content": "Provide a detailed explanation of Machine Learning, covering supervised, unsupervised, and reinforcement learning paradigms. Explain the importance of data, features, and model training processes. Discuss its applications in healthcare, finance, and recommendation systems.",
-      "quiz": [
-        {{
-          "question": "What defines supervised learning?",
-          "options": [
-            "Learning with labeled data",
-            "Learning without data",
-            "Learning by observation only",
-            "Learning using random guessing"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "Which of these is an example of unsupervised learning?",
-          "options": [
-            "Clustering similar customers based on behavior",
-            "Training a model to classify images of cats and dogs",
-            "Predicting house prices from features",
-            "Detecting spam emails"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "What is the goal of reinforcement learning?",
-          "options": [
-            "Maximize cumulative rewards through actions and feedback",
-            "Predict future weather",
-            "Reduce hardware costs",
-            "Memorize data points"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "Which component is essential for training machine learning models?",
-          "options": [
-            "High-quality data",
-            "Random guesses",
-            "Manual rule writing",
-            "Fixed outcomes"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "Which of the following best demonstrates ML in real life?",
-          "options": [
-            "Netflix recommending shows",
-            "Sending physical mail",
-            "Turning on lights manually",
-            "Calculating sums with a calculator"
-          ],
-          "answer": 0
-        }}
-      ]
+      "content": "Machine Learning is a subset of AI that enables systems to learn from data without explicit programming. It includes supervised learning (learning from labeled data), unsupervised learning (finding patterns in unlabeled data), and reinforcement learning (learning through trial and error with rewards). ML requires high-quality data and feature engineering. Applications include healthcare diagnosis, financial fraud detection, and personalized recommendations in streaming services.",
+      "quiz": {{
+        "question": "What defines supervised learning?",
+        "options": [
+          "Learning with labeled data",
+          "Learning without data",
+          "Learning by observation only",
+          "Learning using random guessing"
+        ],
+        "answer": 0
+      }}
     }},
     "DL": {{
-      "content": "Describe Deep Learning in depth, including how it differs from traditional ML, its architecture (layers, neurons, weights), and how neural networks learn using backpropagation. Discuss convolutional, recurrent, and transformer models, and their real-world uses.",
-      "quiz": [
-        {{
-          "question": "What makes deep learning different from traditional ML?",
-          "options": [
-            "It uses multiple layers of neural networks",
-            "It only works on text data",
-            "It requires no data",
-            "It is purely symbolic logic"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "What is the purpose of backpropagation?",
-          "options": [
-            "To adjust weights and minimize loss",
-            "To increase the number of layers",
-            "To generate random predictions",
-            "To compress training data"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "Which architecture is used primarily for image data?",
-          "options": [
-            "Convolutional Neural Network (CNN)",
-            "Recurrent Neural Network (RNN)",
-            "Transformer",
-            "Decision Tree"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "Which deep learning model excels at sequence-based tasks like language?",
-          "options": [
-            "Recurrent Neural Network (RNN)",
-            "Convolutional Network",
-            "Linear Regression",
-            "Support Vector Machine"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "What does a transformer model primarily use to understand context?",
-          "options": [
-            "Attention mechanism",
-            "Random sampling",
-            "Gradient descent only",
-            "Image convolution"
-          ],
-          "answer": 0
-        }}
-      ]
+      "content": "Deep Learning uses multi-layered neural networks to learn hierarchical representations of data. Unlike traditional ML, it automatically extracts features from raw data. Neural networks consist of layers of neurons with weighted connections that adjust through backpropagation. Key architectures include CNNs for image processing, RNNs for sequential data like text and speech, and Transformers that use attention mechanisms for understanding context in language tasks. Deep Learning powers applications like image recognition, language translation, and autonomous driving.",
+      "quiz": {{
+        "question": "What makes deep learning different from traditional ML?",
+        "options": [
+          "It uses multiple layers of neural networks",
+          "It only works on text data",
+          "It requires no data",
+          "It is purely symbolic logic"
+        ],
+        "answer": 0
+      }}
     }}
   }}
 }}
 
-Rules:
-- Do NOT include ```json``` or any non-JSON text.
-- Each node must have: id, label, level, unlocked, quiz_completed.
-- Each quiz must contain **5 questions**, each with 4 options and an integer 'answer' index.
-- The 'content' for each topic must be **in-depth**, covering background, key ideas, real-world uses, and examples.
-- Return **only valid JSON**, with no explanation or commentary.
+CRITICAL RULES:
+- Do NOT include ```json``` or any non-JSON text
+- Each node must have: id, label, level, unlocked, quiz_completed
+- Each nodeContent entry must have "content" (detailed paragraph) and "quiz" (single quiz object)
+- Each quiz must have: question (string), options (array of 4 strings), answer (integer 0-3)
+- The content must be in-depth, covering background, key ideas, and real-world examples
+- Create at least 3-5 nodes with proper hierarchy (level 0 is root)
+- Return ONLY valid JSON with no explanation or commentary
 """
 
     headers = {
@@ -319,27 +222,51 @@ Rules:
     data = {
         "model": MODEL,
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.6
+        "temperature": 0.6,
+        "max_tokens": 4000
     }
 
-    response = requests.post(API_URL, headers=headers, json=data, timeout=120)
-
-    if response.status_code != 200:
-        print("Error:", response.status_code, response.text)
-        return None
-
-    j = response.json()
-    raw_output = j["choices"][0]["message"]["content"]
-    cleaned_output = clean_ai_json(raw_output)
-   
     try:
-        data = json.loads(cleaned_output)
-        return data  
+        print(f"Calling OpenRouter API for topic: {topic}")
+        response = requests.post(API_URL, headers=headers, json=data, timeout=120)
+
+        if response.status_code != 200:
+            print(f"API Error: {response.status_code} - {response.text}")
+            return None
+
+        j = response.json()
+        raw_output = j["choices"][0]["message"]["content"]
+        print(f"Received response, cleaning JSON...")
+        
+        cleaned_output = clean_ai_json(raw_output)
+       
+        # Parse and validate JSON
+        result = json.loads(cleaned_output)
+        
+        # Validate structure
+        if not all(key in result for key in ["nodes", "links", "nodeContent"]):
+            print("Error: Missing required keys in response")
+            return None
+        
+        print(f"Successfully generated graph with {len(result['nodes'])} nodes")
+        return result
+        
+    except requests.exceptions.Timeout:
+        print("Error: Request timed out")
+        return None
+    except requests.exceptions.RequestException as e:
+        print(f"Error: Request failed - {str(e)}")
+        return None
     except json.JSONDecodeError as e:
-        print("Failed to parse JSON:", e)
-        print("Cleaned output:\n", cleaned_output)
+        print(f"Failed to parse JSON: {e}")
+        print(f"Cleaned output:\n{cleaned_output[:500]}...")
+        return None
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
         return None
 
 if __name__ == "__main__":
     import uvicorn
+    print("Starting StudySphere Backend Server...")
+    print(f"CORS enabled for: hackpsu-five.vercel.app")
     uvicorn.run(app, host="0.0.0.0", port=8000)
