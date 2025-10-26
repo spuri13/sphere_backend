@@ -1,45 +1,67 @@
-
-from fastapi import FastAPI
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
 import json
 import requests
 
-
-
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify your frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.post("/api/data")
-async def extract_endpoint(request: Request):
+async def generate_graph(request: Request):
     data = await request.json()
-    url = data.get("url")
-    if not url:
-            return JSONResponse({"error": "Missing url"}, status_code=400)
-    
-    return {"message": f"Received URL: {url}"}
+    topic = data.get("url")  # Using "url" to match your current frontend
+    if not topic:
+        return JSONResponse({"error": "Missing topic"}, status_code=400)
+   
+    try:
+        # Generate the graph data using your existing function
+        result = get_children_nodes(topic)
+       
+        if result:
+            # Save to JSON file (optional)
+            output_file = f"graph_{topic.replace(' ', '_')}.json"
+            with open(output_file, 'w') as f:
+                json.dump(result, f, indent=2)
+           
+            return JSONResponse(result)
+        else:
+            return JSONResponse({"error": "Failed to generate graph data"}, status_code=500)
+   
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 @app.post("/api/info")
-async def extract_endpoint(request: Request):
+async def get_info(request: Request):
     info = await request.json()
     url = info.get("url")
     if not url:
-            return JSONResponse({"error": "Missing url"}, status_code=400)
-    
-    
+        return JSONResponse({"error": "Missing url"}, status_code=400)
+    return {"message": f"Received URL: {url}"}
+
 @app.post("/api/quiz")
-async def extract_endpoint(request: Request):
+async def get_quiz(request: Request):
     quiz = await request.json()
     url = quiz.get("url")
     if not url:
-            return JSONResponse({"error": "Missing url"}, status_code=400)
+        return JSONResponse({"error": "Missing url"}, status_code=400)
     return {"message": f"Received URL: {url}"}
 
 def clean_ai_json(raw_text):
     """
     Remove ```json and ``` wrappers if present.
     """
-    if raw_text.startswith("```json"): 
+    if raw_text.startswith("```json"):
         raw_text = raw_text[len("```json"):].strip()
     if raw_text.startswith("```"):
         raw_text = raw_text[3:].strip()
@@ -63,9 +85,6 @@ for path in possible_paths:
 if not dotenv_found:
     print("Warning: .env file not found. Make sure it exists in the script folder or cwd.")
 
-
-load_dotenv(path)
-# python3 generate_children.py
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 if not API_KEY:
     raise ValueError(
@@ -292,7 +311,6 @@ Rules:
 - Return **only valid JSON**, with no explanation or commentary.
 """
 
-
     headers = {
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json"
@@ -304,15 +322,16 @@ Rules:
         "temperature": 0.6
     }
 
-    response = requests.post(API_URL, headers=headers, json = data, timeout=120)
+    response = requests.post(API_URL, headers=headers, json=data, timeout=120)
 
     if response.status_code != 200:
         print("Error:", response.status_code, response.text)
         return None
-    # python3 generate_children.py
+
     j = response.json()
     raw_output = j["choices"][0]["message"]["content"]
     cleaned_output = clean_ai_json(raw_output)
+   
     try:
         data = json.loads(cleaned_output)
         return data  
@@ -320,13 +339,7 @@ Rules:
         print("Failed to parse JSON:", e)
         print("Cleaned output:\n", cleaned_output)
         return None
-    
-if __name__ == "__main__":
-    topic = input("Enter a topic: ").strip()
-    print(f"\nGenerating subtopics for '{topic}'...\n")
-    result = get_children_nodes(topic)
 
-    if result:
-        print(json.dumps(result, indent=2))
-    else:
-        print("Failed to get valid JSON from OpenRouter.ai.")
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
