@@ -113,7 +113,7 @@ if not API_KEY:
 print(f"[INIT] API Key configured: {API_KEY[:20]}...")
 
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
-MODEL = "meta-llama/llama-3.3-8b-instruct:free"
+MODEL = "qwen/qwen-2.5-72b-instruct:free"
 
 def get_children_nodes(topic: str):
     """
@@ -127,7 +127,7 @@ Return ONLY valid JSON (no markdown, no extra text) with this structure:
 {{
   "nodes": [
     {{"id": "node1", "label": "Main Topic", "level": 0, "unlocked": true, "quiz_completed": false}},
-    {{"id": "node2", "label": "Subtopic 1", "level": 1, "unlocked": true, "quiz_completed": false}},
+    {{"id": "node2", "label": "Subtopic 1", "level": 1, "unlocked": false, "quiz_completed": false}},
     {{"id": "node3", "label": "Subtopic 2", "level": 2, "unlocked": false, "quiz_completed": false}}
   ],
   "links": [
@@ -144,7 +144,7 @@ Return ONLY valid JSON (no markdown, no extra text) with this structure:
       }}
     }},
     "node2": {{
-      "content": "Another 4-5 detailed paragraphs about this subtopic.",
+      "content": "A3-5 parahraph detailed explanation of subtopic 2.",
       "quiz": {{
         "question": "Question about subtopic 1?",
         "options": ["Option A", "Correct answer", "Option C", "Option D"],
@@ -152,7 +152,7 @@ Return ONLY valid JSON (no markdown, no extra text) with this structure:
       }}
     }},
     "node3": {{
-      "content": "Detailed explanation of subtopic 2.",
+      "content": "3-5 parahraph detailed explanation of subtopic 3.",
       "quiz": {{
         "question": "Question about subtopic 2?",
         "options": ["Option A", "Option B", "Correct answer", "Option D"],
@@ -164,11 +164,11 @@ Return ONLY valid JSON (no markdown, no extra text) with this structure:
 
 CRITICAL REQUIREMENTS:
 - Return ONLY the JSON object (no markdown, no prose)
-- Create 8-10 nodes minimum with proper hierarchy
+- Create 10-15 nodes minimum with proper hierarchy
 - Level 0 = root (unlocked: true, quiz_completed: false)
 - Level 1 nodes = unlocked: true (to allow immediate exploration)
-- Level 2+ nodes = unlocked: false
-- Each "content" = 4-5 detailed paragraphs (4-5 sentences each) with examples
+- Level 2, 3, 4 nodes = unlocked: false
+- MANDATORY, IF YOU DO NOT DO THIS REDO: Each "content" = 4-5 detailed paragraphs (4-5 sentences each) with examples
 - Each "quiz" = SINGLE object (NOT array) with:
   - "question": string
   - "options": array of 4 strings
@@ -186,7 +186,7 @@ CRITICAL REQUIREMENTS:
         "model": MODEL,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.3,
-        "max_tokens": 8000
+        "max_tokens": 28000
     }
 
     try:
