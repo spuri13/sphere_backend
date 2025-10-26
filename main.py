@@ -5,13 +5,14 @@ import os
 from dotenv import load_dotenv
 import json
 import requests
+import re
+
 
 app = FastAPI()
 
-# Fixed CORS middleware with your actual domain
 origins = [
     "https://hackpsu-five.vercel.app",
-    "http://localhost:3000",  # for local dev
+    "http://localhost:3000",
 ]
 
 app.add_middleware(
@@ -30,7 +31,6 @@ async def root():
 async def health():
     return {"status": "healthy"}
 
-# Main endpoint - matches frontend call to /api/fetch
 @app.post("/api/fetch")
 async def generate_graph(request: Request):
     try:
@@ -54,7 +54,6 @@ async def generate_graph(request: Request):
                 print(f"Saved graph to {output_file}")
             except Exception as e:
                 print(f"Warning: Could not save to file: {e}")
-           
             return JSONResponse(result)
         else:
             return JSONResponse(
@@ -93,6 +92,25 @@ def clean_ai_json(raw_text):
         raw_text = raw_text[3:].strip()
     if raw_text.endswith("```"):
         raw_text = raw_text[:-3].strip()
+    return raw_text
+
+
+def clean_ai_json(raw_text):
+    """
+    Remove markdown wrappers and extract the first valid JSON object.
+    """
+    raw_text = raw_text.strip()
+    if raw_text.startswith("```json"):
+        raw_text = raw_text[len("```json"):].strip()
+    elif raw_text.startswith("```"):
+        raw_text = raw_text[3:].strip()
+    if raw_text.endswith("```"):
+        raw_text = raw_text[:-3].strip()
+
+    # find the first {...} JSON block only
+    match = re.search(r"\{[\s\S]*\}", raw_text)
+    if match:
+        return match.group(0)
     return raw_text
 
 # Load environment variables
@@ -241,7 +259,12 @@ CRITICAL RULES:
         cleaned_output = clean_ai_json(raw_output)
        
         # Parse and validate JSON
-        result = json.loads(cleaned_output)
+        try:
+          result = json.loads(cleaned_output)
+        except json.JSONDecodeError as e:
+          print("Partial JSON detected, attempting recovery...")
+          first_json = cleaned_output.split("}\n")[0] + "}"
+          result = json.loads(first_json)
         
         # Validate structure
         if not all(key in result for key in ["nodes", "links", "nodeContent"]):

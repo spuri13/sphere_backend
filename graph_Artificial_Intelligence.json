@@ -1,0 +1,124 @@
+{
+  "nodes": [
+    {
+      "id": "AI",
+      "label": "Artificial Intelligence",
+      "level": 0,
+      "unlocked": true,
+      "quiz_completed": false
+    },
+    {
+      "id": "ML",
+      "label": "Machine Learning",
+      "level": 1,
+      "unlocked": true,
+      "quiz_completed": false
+    },
+    {
+      "id": "DL",
+      "label": "Deep Learning",
+      "level": 2,
+      "unlocked": false,
+      "quiz_completed": false
+    },
+    {
+      "id": "NLP",
+      "label": "Natural Language Processing",
+      "level": 2,
+      "unlocked": false,
+      "quiz_completed": false
+    },
+    {
+      "id": "CV",
+      "label": "Computer Vision",
+      "level": 2,
+      "unlocked": false,
+      "quiz_completed": false
+    }
+  ],
+  "links": [
+    {
+      "source": "AI",
+      "target": "ML"
+    },
+    {
+      "source": "AI",
+      "target": "NLP"
+    },
+    {
+      "source": "AI",
+      "target": "CV"
+    },
+    {
+      "source": "ML",
+      "target": "DL"
+    }
+  ],
+  "nodeContent": {
+    "AI": {
+      "content": "Artificial Intelligence (AI) is the simulation of human intelligence in machines. It encompasses narrow AI (task-specific systems like voice assistants) and general AI (hypothetical human-level intelligence). AI powers everyday tools like Siri and Alexa, recommendation systems, and autonomous vehicles. Key challenges include ethical concerns like bias and job displacement, privacy issues, and the difficulty of creating systems that can reason and understand context like humans.",
+      "quiz": {
+        "question": "What distinguishes narrow AI from general AI?",
+        "options": [
+          "Narrow AI focuses on specific tasks; general AI performs any cognitive task",
+          "General AI is weaker than narrow AI",
+          "Narrow AI includes emotions",
+          "General AI only exists in theory"
+        ],
+        "answer": 0
+      }
+    },
+    "ML": {
+      "content": "Machine Learning is a subset of AI that enables systems to learn from data without explicit programming. It includes supervised learning (learning from labeled data), unsupervised learning (finding patterns in unlabeled data), and reinforcement learning (learning through trial and error with rewards). ML requires high-quality data and feature engineering. Applications include healthcare diagnosis, financial fraud detection, and personalized recommendations in streaming services.",
+      "quiz": {
+        "question": "What defines supervised learning?",
+        "options": [
+          "Learning with labeled data",
+          "Learning without data",
+          "Learning by observation only",
+          "Learning using random guessing"
+        ],
+        "answer": 0
+      }
+    },
+    "DL": {
+      "content": "Deep Learning uses multi-layered neural networks to learn hierarchical representations of data. Unlike traditional ML, it automatically extracts features from raw data. Neural networks consist of layers of neurons with weighted connections that adjust through backpropagation. Key architectures include CNNs for image processing, RNNs for sequential data like text and speech, and Transformers that use attention mechanisms for understanding context in language tasks. Deep Learning powers applications like image recognition, language translation, and autonomous driving.",
+      "quiz": {
+        "question": "What makes deep learning different from traditional ML?",
+        "options": [
+          "It uses multiple layers of neural networks",
+          "It only works on text data",
+          "It requires no data",
+          "It is purely symbolic logic"
+        ],
+        "answer": 0
+      }
+    },
+    "NLP": {
+      "content": "Natural Language Processing enables computers to understand, interpret, and generate human language. It includes syntactic analysis (grammar and structure), semantic analysis (meaning), and pragmatic analysis (context). Key tasks include named entity recognition, sentiment analysis, and machine translation. Modern NLP uses deep learning with Transformer architectures that handle long-range dependencies through attention mechanisms. Applications include chatbots, language translation, and content moderation.",
+      "quiz": {
+        "question": "What is a key challenge in NLP?",
+        "options": [
+          "Handling ambiguity and context in language",
+          "Processing binary data efficiently",
+          "Ignoring grammar rules",
+          "Avoiding any context consideration"
+        ],
+        "answer": 0
+      }
+    },
+    "CV": {
+      "content": "Computer Vision enables computers to derive information from images and videos. It includes image classification, object detection, segmentation, and scene reconstruction. Key techniques involve convolutional neural networks (CNNs) for feature extraction, and deep learning models that can identify patterns in visual data. Computer vision is crucial for applications like autonomous vehicles (detecting obstacles), medical imaging (diagnosing diseases), and facial recognition systems.",
+      "quiz": {
+        "question": "What is a primary application of computer vision?",
+        "options": [
+          "Image recognition and classification",
+          "Text summarization",
+          "Audio signal processing",
+          "Database management"
+        ],
+        "answer": 0
+      }
+    }
+  }
+}
