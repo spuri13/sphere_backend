@@ -40,6 +40,7 @@ def clean_ai_json(raw_text):
     """Remove markdown wrappers and extract valid JSON."""
     raw_text = raw_text.strip()
     
+    # Remove markdown code blocks
     if raw_text.startswith("```json"):
         raw_text = raw_text[7:].strip()
     elif raw_text.startswith("```"):
@@ -47,9 +48,15 @@ def clean_ai_json(raw_text):
     if raw_text.endswith("```"):
         raw_text = raw_text[:-3].strip()
     
+    # Extract JSON object
     match = re.search(r'\{[\s\S]*\}', raw_text)
     if match:
-        return match.group(0)
+        raw_text = match.group(0)
+    
+    # Fix common escape issues - replace problematic backslashes
+    # This handles cases like "can't" becoming "can\'t"
+    raw_text = raw_text.replace("\\'", "'")
+    raw_text = raw_text.replace('\\"', '"')
     
     return raw_text
 
