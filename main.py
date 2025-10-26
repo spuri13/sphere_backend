@@ -39,7 +39,7 @@ def clean_ai_json(raw_text):
     """
     Remove ```json and ``` wrappers if present.
     """
-    if raw_text.startswith("```json"):
+    if raw_text.startswith("```json"): 
         raw_text = raw_text[len("```json"):].strip()
     if raw_text.startswith("```"):
         raw_text = raw_text[3:].strip()
