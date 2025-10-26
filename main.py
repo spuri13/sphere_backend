@@ -111,7 +111,7 @@ if not API_KEY:
 print(f"[INIT] API Key configured: {API_KEY[:20]}...")
 
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
-MODEL = "deepseek/deepseek-chat-v3.1:free"
+MODEL = "meta-llama/llama-3.3-8b-instruct:free"
 
 def get_children_nodes(topic: str):
     """
@@ -160,11 +160,14 @@ Return ONLY a valid JSON object (no markdown, no explanations) with this exact s
 }}
 
 Requirements:
-- Create 3-5 nodes minimum
+- Create 8-10 nodes minimum
 - Level 0 is the root (unlocked: true)
 - Level 1 nodes should be unlocked: true
-- Level 2+ nodes should be unlocked: false
-- Each node needs content (informative paragraph) and quiz (question with 4 options)
+- Level 2 nodes should be unlocked: false
+- Level 3 nodes should be unlocked: false
+- Level 4 nodes should be unlocked: false
+- Level 5+ nodes should be unlocked: false
+- Each node needs content (several deeply informative paragraphs about the topic) and quiz (question with 4 options)
 - Answer must be integer 0-3 (index of correct option)
 - Return ONLY the JSON object, no other text"""
 
