@@ -14,9 +14,7 @@ origins = [
     "https://hackpsu-five.vercel.app",
     "https://hackpsu-git-main-aaravdaga-5997s-projects.vercel.app", 
     "https://hackpsu-ndvo95ani-aaravdaga-5997s-projects.vercel.app",
-    "https://hackpsu-five.vercel.app",
-    "https://hackpsu-aaravdaga-5997s-projects.vercel.app"
-    "https://hackpsu-git-main-aaravdaga-5997s-projects.vercel.app",
+    "https://hackpsu-aaravdaga-5997s-projects.vercel.app",
     "https://hackpsu-aj1y0cag4-aaravdaga-5997s-projects.vercel.app",
     "http://localhost:3000",
     "http://localhost:5173",
@@ -106,7 +104,7 @@ for path in possible_paths:
 if not dotenv_found:
     print("[INIT] Warning: .env file not found")
 
-# Get API key from environment or hardcoded fallback
+# Get API key from environment
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 if not API_KEY:
@@ -115,230 +113,68 @@ if not API_KEY:
 print(f"[INIT] API Key configured: {API_KEY[:20]}...")
 
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
-MODEL = "mistralai/mistral-small-3.2-24b-instruct:free"
+MODEL = "meta-llama/llama-3.3-8b-instruct:free"
 
 def get_children_nodes(topic: str):
     """
-    Generate nodes, links, and content for a mind map using DeepSeek API.
+    Generate nodes, links, and content for a mind map using AI.
+    Returns format compatible with frontend: single quiz object per node.
     """
     prompt = f"""Generate a learning mind map for the topic "{topic}".
 
-Return ONLY a valid JSON object (no markdown, no explanations) with this exact structure, but replacing the example content with content about the given topic:
+Return ONLY valid JSON (no markdown, no extra text) with this structure:
 
 {{
   "nodes": [
-    {{
-      "id": "AI",
-      "label": "Artificial Intelligence",
-      "level": 0,
-      "unlocked": true,
-      "quiz_completed": false
-    }},
-    {{
-      "id": "ML",
-      "label": "Machine Learning",
-      "level": 1,
-      "unlocked": true,
-      "quiz_completed": false
-    }},
-    {{
-      "id": "DL",
-      "label": "Deep Learning",
-      "level": 2,
-      "unlocked": false,
-      "quiz_completed": false
-    }}
+    {{"id": "node1", "label": "Main Topic", "level": 0, "unlocked": true, "quiz_completed": false}},
+    {{"id": "node2", "label": "Subtopic 1", "level": 1, "unlocked": true, "quiz_completed": false}},
+    {{"id": "node3", "label": "Subtopic 2", "level": 2, "unlocked": false, "quiz_completed": false}}
   ],
   "links": [
-    {{ "source": "AI", "target": "ML" }},
-    {{ "source": "ML", "target": "DL" }}
+    {{"source": "node1", "target": "node2"}},
+    {{"source": "node2", "target": "node3"}}
   ],
   "nodeContent": {{
-    "AI": {{
-      "content": "Write an in-depth explanation of Artificial Intelligence (AI) that covers its definition, core goals, types (narrow vs general), real-world examples, ethical considerations, and current challenges in research. The paragraph should be comprehensive and informative.",
-      "quiz": [
-        {{
-          "question": "What distinguishes narrow AI from general AI?",
-          "options": [
-            "Narrow AI focuses on specific tasks; general AI performs any cognitive task",
-            "General AI is weaker than narrow AI",
-            "Narrow AI includes emotions",
-            "General AI only exists in theory"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "Which of the following is an example of AI in everyday use?",
-          "options": [
-            "Voice assistants like Siri and Alexa",
-            "Manual typewriters",
-            "Analog clocks",
-            "Vacuum tubes"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "What is one key ethical issue in AI?",
-          "options": [
-            "Lack of creativity",
-            "Job displacement and bias",
-            "Slow computation",
-            "Overuse of electricity"
-          ],
-          "answer": 1
-        }},
-        {{
-          "question": "Which subfield of AI focuses on decision-making and learning from data?",
-          "options": [
-            "Machine Learning",
-            "Cryptography",
-            "Quantum Computing",
-            "Network Security"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "What is a primary challenge in creating general AI?",
-          "options": [
-            "Building machines that understand and reason like humans",
-            "Improving computer graphics",
-            "Reducing hardware costs",
-            "Translating code to multiple languages"
-          ],
-          "answer": 0
-        }}
-      ]
+    "node1": {{
+      "content": "Write 4-5 detailed paragraphs (each 4-5 sentences) explaining this topic comprehensively. Include definition, key concepts, real-world examples, applications, challenges, and advanced context.",
+      "quiz": {{
+        "question": "What is a key characteristic of this topic?",
+        "options": ["Correct answer", "Wrong option 1", "Wrong option 2", "Wrong option 3"],
+        "answer": 0
+      }}
     }},
-    "ML": {{
-      "content": "Provide a detailed explanation of Machine Learning, covering supervised, unsupervised, and reinforcement learning paradigms. Explain the importance of data, features, and model training processes. Discuss its applications in healthcare, finance, and recommendation systems.",
-      "quiz": [
-        {{
-          "question": "What defines supervised learning?",
-          "options": [
-            "Learning with labeled data",
-            "Learning without data",
-            "Learning by observation only",
-            "Learning using random guessing"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "Which of these is an example of unsupervised learning?",
-          "options": [
-            "Clustering similar customers based on behavior",
-            "Training a model to classify images of cats and dogs",
-            "Predicting house prices from features",
-            "Detecting spam emails"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "What is the goal of reinforcement learning?",
-          "options": [
-            "Maximize cumulative rewards through actions and feedback",
-            "Predict future weather",
-            "Reduce hardware costs",
-            "Memorize data points"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "Which component is essential for training machine learning models?",
-          "options": [
-            "High-quality data",
-            "Random guesses",
-            "Manual rule writing",
-            "Fixed outcomes"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "Which of the following best demonstrates ML in real life?",
-          "options": [
-            "Netflix recommending shows",
-            "Sending physical mail",
-            "Turning on lights manually",
-            "Calculating sums with a calculator"
-          ],
-          "answer": 0
-        }}
-      ]
+    "node2": {{
+      "content": "Another 4-5 detailed paragraphs about this subtopic.",
+      "quiz": {{
+        "question": "Question about subtopic 1?",
+        "options": ["Option A", "Correct answer", "Option C", "Option D"],
+        "answer": 1
+      }}
     }},
-    "DL": {{
-      "content": "Describe Deep Learning in depth, including how it differs from traditional ML, its architecture (layers, neurons, weights), and how neural networks learn using backpropagation. Discuss convolutional, recurrent, and transformer models, and their real-world uses.",
-      "quiz": [
-        {{
-          "question": "What makes deep learning different from traditional ML?",
-          "options": [
-            "It uses multiple layers of neural networks",
-            "It only works on text data",
-            "It requires no data",
-            "It is purely symbolic logic"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "What is the purpose of backpropagation?",
-          "options": [
-            "To adjust weights and minimize loss",
-            "To increase the number of layers",
-            "To generate random predictions",
-            "To compress training data"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "Which architecture is used primarily for image data?",
-          "options": [
-            "Convolutional Neural Network (CNN)",
-            "Recurrent Neural Network (RNN)",
-            "Transformer",
-            "Decision Tree"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "Which deep learning model excels at sequence-based tasks like language?",
-          "options": [
-            "Recurrent Neural Network (RNN)",
-            "Convolutional Network",
-            "Linear Regression",
-            "Support Vector Machine"
-          ],
-          "answer": 0
-        }},
-        {{
-          "question": "What does a transformer model primarily use to understand context?",
-          "options": [
-            "Attention mechanism",
-            "Random sampling",
-            "Gradient descent only",
-            "Image convolution"
-          ],
-          "answer": 0
-        }}
-      ]
+    "node3": {{
+      "content": "Detailed explanation of subtopic 2.",
+      "quiz": {{
+        "question": "Question about subtopic 2?",
+        "options": ["Option A", "Option B", "Correct answer", "Option D"],
+        "answer": 2
+      }}
     }}
   }}
 }}
 
-Use the above example as to how to format your response, but use the below instructions for the content generation:
-
-Requirements:
-- Return ONLY valid JSON (no markdown, no prose before/after)
-- Include 8–10 nodes minimum
-- Level 0 = root (unlocked: true)
-- Level 1 nodes = unlocked: false
-- Levels 2, 3, 4, and/or 5 = unlocked: false
-- Each node’s "content" must have AT LEAST **4 detailed paragraphs** (each 4–5 sentences) that:
-  - Explain the subtopic clearly
-  - Include examples or applications
-  - Offer advanced context or nuances
-- Each node must include a "quiz" object with:
-  - one comprehension-style question
-  - four plausible multiple-choice options
-  - "answer" = index (0–3) of correct choice
-
+CRITICAL REQUIREMENTS:
+- Return ONLY the JSON object (no markdown, no prose)
+- Create 8-10 nodes minimum with proper hierarchy
+- Level 0 = root (unlocked: true, quiz_completed: false)
+- Level 1 nodes = unlocked: true (to allow immediate exploration)
+- Level 2+ nodes = unlocked: false
+- Each "content" = 4-5 detailed paragraphs (4-5 sentences each) with examples
+- Each "quiz" = SINGLE object (NOT array) with:
+  - "question": string
+  - "options": array of 4 strings
+  - "answer": integer 0-3 (index of correct option)
+- Use short, unique IDs (e.g., "ai", "ml", "dl", not full names)
+- Ensure all node IDs match between nodes, links, and nodeContent
 """
 
     headers = {
@@ -349,8 +185,8 @@ Requirements:
     payload = {
         "model": MODEL,
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.2,
-        "max_tokens": 121072
+        "temperature": 0.3,
+        "max_tokens": 8000
     }
 
     try:
@@ -395,11 +231,39 @@ Requirements:
         if not result["nodes"] or len(result["nodes"]) == 0:
             print("[AI] Error: No nodes in response")
             return None
+        
+        # Validate and fix nodeContent structure
+        for node_id, content in result["nodeContent"].items():
+            if "quiz" in content:
+                # If quiz is an array, take the first element
+                if isinstance(content["quiz"], list):
+                    print(f"[AI] Converting quiz array to single object for node: {node_id}")
+                    content["quiz"] = content["quiz"][0] if content["quiz"] else None
+                
+                # Validate quiz structure
+                if content["quiz"]:
+                    quiz = content["quiz"]
+                    if not all(key in quiz for key in ["question", "options", "answer"]):
+                        print(f"[AI] Warning: Incomplete quiz for node {node_id}")
+                    elif not isinstance(quiz["options"], list) or len(quiz["options"]) != 4:
+                        print(f"[AI] Warning: Invalid options for node {node_id}")
+                    elif not isinstance(quiz["answer"], int) or quiz["answer"] not in [0, 1, 2, 3]:
+                        print(f"[AI] Warning: Invalid answer index for node {node_id}")
             
         print(f"[AI] ✓ Successfully generated graph:")
         print(f"[AI]   - {len(result['nodes'])} nodes")
         print(f"[AI]   - {len(result['links'])} links")
         print(f"[AI]   - {len(result['nodeContent'])} content entries")
+        
+        # Log first node's structure for debugging
+        if result['nodeContent']:
+            first_key = list(result['nodeContent'].keys())[0]
+            first_content = result['nodeContent'][first_key]
+            print(f"[AI]   - Sample node '{first_key}':")
+            print(f"[AI]     - content length: {len(first_content.get('content', ''))}")
+            print(f"[AI]     - quiz type: {type(first_content.get('quiz'))}")
+            if first_content.get('quiz'):
+                print(f"[AI]     - quiz keys: {list(first_content['quiz'].keys())}")
         
         return result
         
