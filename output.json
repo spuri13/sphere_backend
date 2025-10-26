@@ -1,0 +1,334 @@
+{
+  "nodes": [
+    {
+      "id": "A1",
+      "label": "Algebra",
+      "level": 0,
+      "unlocked": true,
+      "quiz_completed": false
+    },
+    {
+      "id": "E1",
+      "label": "Linear Equations",
+      "level": 1,
+      "unlocked": true,
+      "quiz_completed": false
+    },
+    {
+      "id": "E2",
+      "label": "Polynomials",
+      "level": 1,
+      "unlocked": true,
+      "quiz_completed": false
+    },
+    {
+      "id": "E3",
+      "label": "Quadratic Equations",
+      "level": 1,
+      "unlocked": true,
+      "quiz_completed": false
+    },
+    {
+      "id": "E4",
+      "label": "Inequalities",
+      "level": 1,
+      "unlocked": true,
+      "quiz_completed": false
+    }
+  ],
+  "links": [
+    {
+      "source": "A1",
+      "target": "E1"
+    },
+    {
+      "source": "A1",
+      "target": "E2"
+    },
+    {
+      "source": "A1",
+      "target": "E3"
+    },
+    {
+      "source": "A1",
+      "target": "E4"
+    }
+  ],
+  "nodeContent": {
+    "A1": {
+      "content": "Algebra is a branch of mathematics that deals with symbols and the rules for manipulating those symbols. It is a unifying thread of almost all of mathematics and includes everything from solving elementary equations to studying abstractions such as groups, rings, and fields. The more basic parts of algebra are called elementary algebra; the more abstract parts are called abstract algebra or modern algebra. Elementary algebra is essential for any study of mathematics, science, or engineering, as well as such applications as medicine and economics. Abstract algebra is a major area in advanced mathematics, studied primarily by professional mathematicians.",
+      "quiz": [
+        {
+          "question": "What is the primary focus of algebra?",
+          "options": [
+            "The study of mathematical symbols and the rules for manipulating these symbols",
+            "The study of geometric shapes and their properties",
+            "The study of probability and statistics",
+            "The study of calculus and derivatives"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "Which of the following is a fundamental concept in algebra?",
+          "options": [
+            "Variables and constants",
+            "Area and perimeter",
+            "Volume and mass",
+            "Atoms and molecules"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "What does solving an equation typically involve?",
+          "options": [
+            "Finding the value(s) of the variable(s) that satisfy the equation",
+            "Graphing the equation on a coordinate plane",
+            "Calculating the area under the curve of the equation",
+            "Differentiating the equation with respect to time"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "Which branch of mathematics is most closely related to algebra?",
+          "options": [
+            "Number theory",
+            "Geometry",
+            "Trigonometry",
+            "Calculus"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "What is a common application of algebra in real life?",
+          "options": [
+            "Calculating loan payments and interest",
+            "Predicting the weather with high accuracy",
+            "Diagnosing medical conditions",
+            "Designing architectural blueprints"
+          ],
+          "answer": 0
+        }
+      ]
+    },
+    "E1": {
+      "content": "Linear equations are equations of the first order. These equations are defined for lines in the coordinate system. An equation for a straight line is called a linear equation. The general representation of the straight line is y = m x + b, where m is the slope of the line and b is the y-intercept. Linear equations can also have more than one variable, such as a x + b y + c = 0. Linear equations are used to solve problems involving constant rates of change, such as speed, distance, and time. They are fundamental in algebra and are used in various fields including physics, economics, and engineering.",
+      "quiz": [
+        {
+          "question": "What is the standard form of a linear equation in two variables?",
+          "options": [
+            "Ax + By + C = 0, where A, B, and C are constants",
+            "y = sin(x)",
+            "x^2 + y^2 = r^2",
+            "y = e^x"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "What does the slope of a line represent?",
+          "options": [
+            "The rate of change of y with respect to x",
+            "The total area under the curve",
+            "The curvature of the line",
+            "The distance from the origin"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "If two lines are parallel, what is true about their slopes?",
+          "options": [
+            "They are equal",
+            "They are reciprocals",
+            "They are negatives of each other",
+            "They are undefined"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "What is the solution to the system of equations: x + y = 5 and x - y = 1?",
+          "options": [
+            "x = 3, y = 2",
+            "x = 2, y = 3",
+            "x = 4, y = 1",
+            "x = 1, y = 4"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "Which of the following is a linear equation?",
+          "options": [
+            "2x + 3y = 6",
+            "x^2 + 2x + 1 = 0",
+            "|x| = 5",
+            "sin(x) = 0"
+          ],
+          "answer": 0
+        }
+      ]
+    },
+    "E2": {
+      "content": "Polynomials are expressions consisting of variables and coefficients, that involves only the operations of addition, subtraction, multiplication, and non-negative integer exponentiation of variables. An example of a polynomial of a single variable x is x^2 - 4x + 7. Polynomials appear in a wide variety of areas of mathematics and science. For example, they are used to form polynomial equations, which encode a wide range of problems, from elementary word problems to complicated problems in the sciences; they are used to define polynomial functions, which appear in settings ranging from basic chemistry and physics to economics and social science; they are also used in calculus and numerical analysis to approximate other functions. In advanced mathematics, polynomials are used to construct polynomial rings, a central concept in abstract algebra and algebraic geometry.",
+      "quiz": [
+        {
+          "question": "What is the degree of the polynomial 3x^4 + 2x^3 - x + 7?",
+          "options": [
+            "4",
+            "3",
+            "2",
+            "1"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "Which of the following is a polynomial?",
+          "options": [
+            "x^3 + 2x^2 - x + 5",
+            "sqrt(x) + 1",
+            "1/(x^2)",
+            "|x| + 3"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "What is the leading coefficient of the polynomial 5x^3 - 2x^2 + x - 8?",
+          "options": [
+            "5",
+            "-2",
+            "1",
+            "-8"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "What is the remainder when x^3 - 4x^2 + 2x - 5 is divided by x - 2?",
+          "options": [
+            "Use the Remainder Theorem: substitute x=2 into the polynomial",
+            "0",
+            "1",
+            "The remainder is the same as the degree"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "Which of these is a factor of x^3 - 3x^2 - 4x + 12?",
+          "options": [
+            "x - 3",
+            "x + 2",
+            "x - 2",
+            "x + 3"
+          ],
+          "answer": 2
+        }
+      ]
+    },
+    "E3": {
+      "content": "Quadratic equations are second-order polynomial equations in a single variable, with the general form ax^2 + bx + c = 0, where a, b, and c are constants and a \u2260 0. These equations are fundamental in algebra and appear in many areas of mathematics and science. The solutions to a quadratic equation are given by the quadratic formula: x = (-b \u00b1 sqrt(b^2 - 4ac)) / (2a). The discriminant, b^2 - 4ac, determines the nature of the roots: if positive, two real roots; if zero, one real root; if negative, two complex roots. Quadratic equations model projectile motion, optimization problems, and are foundational in calculus for finding maxima and minima.",
+      "quiz": [
+        {
+          "question": "What is the value of the discriminant for the equation 2x^2 + 4x + 2 = 0?",
+          "options": [
+            "0",
+            "16",
+            "-16",
+            "64"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "Which method can be used to solve any quadratic equation?",
+          "options": [
+            "Quadratic formula",
+            "Factoring",
+            "Completing the square",
+            "Graphing"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "What is the solution set for x^2 - 5x + 6 = 0?",
+          "options": [
+            "{2, 3}",
+            "{1, 6}",
+            "{-2, -3}",
+            "{0, 5}"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "If the discriminant is negative, what type of roots does the quadratic equation have?",
+          "options": [
+            "Two complex conjugate roots",
+            "One real root",
+            "Two real roots",
+            "No roots"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "What is the vertex of the parabola y = x^2 - 4x + 3?",
+          "options": [
+            "(2, -1)",
+            "(1, 0)",
+            "(4, 3)",
+            "(2, 1)"
+          ],
+          "answer": 0
+        }
+      ]
+    },
+    "E4": {
+      "content": "Inequalities are mathematical expressions involving the symbols <, >, \u2264, or \u2265, indicating that one side is less than, greater than, less than or equal to, or greater than or equal to the other side. Linear inequalities in one variable, such as 3x + 2 < 11, can be solved using properties similar to equations but with careful attention to inequality direction when multiplying or dividing by negative numbers. Systems of linear inequalities in two variables define regions in the coordinate plane, which are critical in linear programming and optimization. Inequalities also extend to quadratic and rational forms, requiring critical point analysis and testing intervals. They are essential in describing constraints in engineering, economics, and various fields of science.",
+      "quiz": [
+        {
+          "question": "Which operation reverses the inequality sign?",
+          "options": [
+            "Multiplying or dividing by a negative number",
+            "Adding a positive number",
+            "Subtracting a negative number",
+            "Multiplying by a positive number"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "What is the solution set for 2x - 5 < 7?",
+          "options": [
+            "x < 6",
+            "x > 6",
+            "x < 3",
+            "x > 3"
+          ],
+          "answer": 2
+        },
+        {
+          "question": "Which number line represents the solution to x + 3 \u2265 1?",
+          "options": [
+            "x \u2265 -2",
+            "x \u2264 -2",
+            "x \u2265 4",
+            "x \u2264 4"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "If a < b and c < 0, then which is true?",
+          "options": [
+            "ac > bc",
+            "ac < bc",
+            "ac = bc",
+            "Cannot be determined"
+          ],
+          "answer": 0
+        },
+        {
+          "question": "What is the solution to the system: y > 2x - 1 and y < -x + 3?",
+          "options": [
+            "The region where the lines cross, tested with a point",
+            "No solution exists",
+            "Only one line satisfies",
+            "All points satisfy"
+          ],
+          "answer": 0
+        }
+      ]
+    }
+  }
+}
