@@ -53,12 +53,41 @@ def clean_ai_json(raw_text):
     if match:
         raw_text = match.group(0)
     
-    # Fix common escape issues - replace problematic backslashes
-    # This handles cases like "can't" becoming "can\'t"
-    raw_text = raw_text.replace("\\'", "'")
-    raw_text = raw_text.replace('\\"', '"')
+    # Fix escape sequences that break JSON
+    # Replace invalid escape sequences with safe alternatives
+    raw_text = raw_text.replace('\\n', ' ')  # newlines in strings
+    raw_text = raw_text.replace('\\t', ' ')  # tabs in strings
+    raw_text = raw_text.replace('\\r', ' ')  # carriage returns
     
-    return raw_text
+    # Fix improperly escaped quotes
+    # But preserve properly escaped quotes in JSON structure
+    lines = raw_text.split('\n')
+    fixed_lines = []
+    for line in lines:
+        # Only fix escapes within string values (after : and before comma/})
+        if '": "' in line:
+            # Split on the value portion
+            parts = line.split('": "', 1)
+            if len(parts) == 2:
+                prefix = parts[0] + '": "'
+                value_and_rest = parts[1]
+                
+                # Find where the string value ends
+                end_quote_idx = value_and_rest.rfind('"')
+                if end_quote_idx > 0:
+                    value = value_and_rest[:end_quote_idx]
+                    rest = value_and_rest[end_quote_idx:]
+                    
+                    # Remove invalid escapes from the value
+                    value = value.replace("\\'", "'")
+                    value = value.replace('\\"', '"')
+                    value = re.sub(r'\\([^"\\/bfnrtu])', r'\1', value)  # Remove other invalid escapes
+                    
+                    line = prefix + value + rest
+        
+        fixed_lines.append(line)
+    
+    return '\n'.join(fixed_lines)
 
 # Load environment
 possible_paths = [
@@ -86,7 +115,7 @@ print(f"[INIT] API Key configured: {API_KEY[:20]}...")
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "qwen/qwen-2.5-72b-instruct:free"
 
-def call_ai(prompt, max_tokens=4000):
+def call_ai(prompt, max_tokens=15000):
     """Helper function to call AI API."""
     headers = {
         "Authorization": f"Bearer {API_KEY}",
@@ -172,7 +201,7 @@ REQUIREMENTS:
 - Logical hierarchy
 - Return ONLY JSON"""
 
-        result = call_ai(prompt, max_tokens=3000)
+        result = call_ai(prompt, max_tokens=15000)
         
         if not result or "nodes" not in result or "links" not in result:
             return JSONResponse({"error": "Failed to generate structure"}, status_code=500)
@@ -220,7 +249,7 @@ CRITICAL:
 - Include examples and applications
 - Return ONLY JSON"""
 
-        result = call_ai(prompt, max_tokens=8000)
+        result = call_ai(prompt, max_tokens=15000)
         
         if not result or "nodeContent" not in result:
             return JSONResponse({"error": "Failed to generate content"}, status_code=500)
@@ -285,7 +314,7 @@ REQUIREMENTS:
 - Mix up correct answer position (0, 1, 2, or 3)
 - Return ONLY JSON"""
 
-        result = call_ai(prompt, max_tokens=6000)
+        result = call_ai(prompt, max_tokens=15000)
         
         if not result or "nodeQuizzes" not in result:
             return JSONResponse({"error": "Failed to generate quizzes"}, status_code=500)
