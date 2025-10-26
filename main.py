@@ -121,94 +121,204 @@ def get_children_nodes(topic: str):
 
 Return ONLY a valid JSON object (no markdown, no explanations) with this exact structure, but replacing the example content with content about the given topic:
 
-{
+{{
   "nodes": [
-    {"id": "PS", "label": "Photosynthesis", "level": 0, "unlocked": true, "quiz_completed": false},
-    {"id": "LightReactions", "label": "Light Reactions", "level": 1, "unlocked": false, "quiz_completed": false},
-    {"id": "CalvinCycle", "label": "Calvin Cycle", "level": 1, "unlocked": false, "quiz_completed": false},
-    {"id": "Chloroplast", "label": "Chloroplast Structure", "level": 2, "unlocked": false, "quiz_completed": false},
-    {"id": "Pigments", "label": "Photosynthetic Pigments", "level": 2, "unlocked": false, "quiz_completed": false},
-    {"id": "ATP", "label": "ATP and Energy Conversion", "level": 2, "unlocked": false, "quiz_completed": false},
-    {"id": "Factors", "label": "Factors Affecting Photosynthesis", "level": 2, "unlocked": false, "quiz_completed": false},
-    {"id": "Adaptations", "label": "C3, C4, and CAM Adaptations", "level": 3, "unlocked": false, "quiz_completed": false}
+    {{
+      "id": "AI",
+      "label": "Artificial Intelligence",
+      "level": 0,
+      "unlocked": true,
+      "quiz_completed": false
+    }},
+    {{
+      "id": "ML",
+      "label": "Machine Learning",
+      "level": 1,
+      "unlocked": true,
+      "quiz_completed": false
+    }},
+    {{
+      "id": "DL",
+      "label": "Deep Learning",
+      "level": 2,
+      "unlocked": false,
+      "quiz_completed": false
+    }}
   ],
   "links": [
-    {"source": "PS", "target": "LightReactions"},
-    {"source": "PS", "target": "CalvinCycle"},
-    {"source": "LightReactions", "target": "Chloroplast"},
-    {"source": "LightReactions", "target": "Pigments"},
-    {"source": "CalvinCycle", "target": "ATP"},
-    {"source": "PS", "target": "Factors"},
-    {"source": "PS", "target": "Adaptations"}
+    {{ "source": "AI", "target": "ML" }},
+    {{ "source": "ML", "target": "DL" }}
   ],
-  "nodeContent": {
-    "PS": {
-      "content": "Photosynthesis is the biochemical process through which green plants, algae, and some bacteria convert light energy into chemical energy. It occurs primarily in the chloroplasts of plant cells, where light energy is absorbed by pigments like chlorophyll. The process uses water and carbon dioxide to produce glucose and oxygen, making it the foundation of most ecosystems.\n\nAt the molecular level, photosynthesis involves two major stages: the light-dependent reactions and the light-independent reactions, commonly known as the Calvin cycle. The light reactions capture sunlight and convert it into ATP and NADPH, while the Calvin cycle uses those products to fix carbon dioxide into glucose.\n\nBeyond its biochemical importance, photosynthesis regulates Earth’s atmosphere and drives the global carbon cycle. By sequestering carbon dioxide, plants act as natural climate stabilizers. Modern scientists also study artificial photosynthesis systems as a way to generate clean energy by mimicking this natural process.",
-      "quiz": {
-        "question": "What are the two major stages of photosynthesis?",
-        "options": ["Light and dark reactions", "Photosystem I and II", "Krebs cycle and glycolysis", "Fermentation and respiration"],
-        "answer": 0
-      }
-    },
-    "LightReactions": {
-      "content": "The light reactions of photosynthesis occur in the thylakoid membranes of chloroplasts and are the first stage of energy conversion. When sunlight hits chlorophyll molecules, it excites electrons that travel through an electron transport chain involving Photosystem II and Photosystem I. This flow generates ATP and NADPH, two high-energy molecules used later in the Calvin cycle.\n\nWater molecules are split during photolysis, releasing oxygen as a byproduct and replenishing electrons lost by chlorophyll. The energy released as electrons move along the transport chain drives the pumping of protons into the thylakoid lumen, creating a proton gradient used to synthesize ATP through chemiosmosis.\n\nThese reactions are dependent on light intensity, pigment availability, and the integrity of photosystems. They effectively convert light energy into usable chemical energy, setting the stage for glucose synthesis in the next phase.",
-      "quiz": {
-        "question": "What are the main products of the light reactions?",
-        "options": ["ATP and NADPH", "Glucose and oxygen", "CO2 and water", "Pyruvate and acetyl-CoA"],
-        "answer": 0
-      }
-    },
-    "CalvinCycle": {
-      "content": "The Calvin cycle, also called the dark or light-independent reactions, is the process by which plants convert carbon dioxide into glucose. It takes place in the stroma of the chloroplast and uses the ATP and NADPH generated from the light reactions as energy sources.\n\nThe cycle begins with the enzyme RuBisCO fixing CO2 into a five-carbon compound called RuBP, forming an unstable six-carbon molecule that quickly splits into two three-carbon molecules of 3-phosphoglycerate. These are then reduced and rearranged to form glucose precursors.\n\nThe Calvin cycle is essential for the biosynthesis of carbohydrates and other organic molecules. Its rate can be affected by temperature, CO2 concentration, and light indirectly, since ATP and NADPH production depend on it.",
-      "quiz": {
-        "question": "What enzyme catalyzes the first step of the Calvin cycle?",
-        "options": ["RuBisCO", "ATP synthase", "Chlorophyll", "Cytochrome oxidase"],
-        "answer": 0
-      }
-    },
-    "Chloroplast": {
-      "content": "Chloroplasts are double-membraned organelles that serve as the site of photosynthesis in plants and algae. Inside them, the thylakoid membranes house the pigments and protein complexes needed for capturing light energy.\n\nThe arrangement of thylakoids into stacks called grana maximizes surface area for light absorption. The stroma, the fluid-filled space surrounding the grana, is where the Calvin cycle reactions occur. This compartmentalization ensures the efficient coordination of energy capture and sugar synthesis.\n\nChloroplasts evolved from ancient cyanobacteria through endosymbiosis, as suggested by their own DNA and ribosomes. Their structure reflects billions of years of evolutionary refinement to maximize energy efficiency.",
-      "quiz": {
-        "question": "Where in the chloroplast does the Calvin cycle occur?",
-        "options": ["Stroma", "Thylakoid membrane", "Grana", "Inner membrane"],
-        "answer": 0
-      }
-    },
-    "Pigments": {
-      "content": "Photosynthetic pigments absorb light energy for use in photosynthesis. Chlorophyll a is the main pigment responsible for absorbing light primarily in the blue and red regions of the spectrum. Chlorophyll b and accessory pigments such as carotenoids broaden the range of absorbable light.\n\nEach pigment has a distinct absorption spectrum, and together they enable plants to harvest energy efficiently under varying light conditions. The light absorbed is transferred to reaction centers in the photosystems where it drives electron excitation.\n\nCarotenoids also serve as photoprotective agents, preventing oxidative damage by dissipating excess energy. The diversity of pigments contributes to the adaptability of photosynthetic organisms to different light environments.",
-      "quiz": {
-        "question": "Which pigment is the primary light absorber in photosynthesis?",
-        "options": ["Chlorophyll a", "Carotenoid", "Xanthophyll", "Chlorophyll b"],
-        "answer": 0
-      }
-    },
-    "ATP": {
-      "content": "ATP (adenosine triphosphate) acts as the universal energy currency of the cell. During the light reactions, ATP is produced through photophosphorylation driven by a proton gradient across the thylakoid membrane.\n\nThe enzyme ATP synthase catalyzes the formation of ATP from ADP and inorganic phosphate as protons flow back into the stroma. This ATP then powers various biosynthetic reactions, including those in the Calvin cycle where glucose is assembled.\n\nATP links the two stages of photosynthesis by carrying energy harvested from light into carbon fixation processes, ensuring a seamless flow of energy within the chloroplast.",
-      "quiz": {
-        "question": "What enzyme synthesizes ATP during photosynthesis?",
-        "options": ["ATP synthase", "RuBisCO", "Cytochrome b6f", "Ferredoxin"],
-        "answer": 0
-      }
-    },
-    "Factors": {
-      "content": "Several environmental factors influence the rate of photosynthesis. Light intensity affects the number of photons available to excite electrons in the chlorophyll molecules. Carbon dioxide concentration directly determines how much carbon can be fixed in the Calvin cycle.\n\nTemperature impacts enzymatic activity, especially that of RuBisCO, which has an optimal operating range. Extremely high or low temperatures can reduce photosynthetic efficiency.\n\nWater availability is also critical, as water is both a reactant and a medium for nutrient transport. Stress from drought or pollution can cause stomata to close, limiting CO2 uptake and slowing down photosynthesis.",
-      "quiz": {
-        "question": "Which of the following does NOT directly affect photosynthesis?",
-        "options": ["Sound frequency", "CO2 concentration", "Light intensity", "Temperature"],
-        "answer": 0
-      }
-    },
-    "Adaptations": {
-      "content": "Different plants have evolved adaptations to optimize photosynthesis under diverse environmental conditions. C3 plants, which include most temperate crops, use the Calvin cycle directly. They are efficient under moderate light and temperature but lose efficiency under hot conditions due to photorespiration.\n\nC4 plants such as maize minimize photorespiration by spatially separating carbon fixation and the Calvin cycle in different cell types. This allows them to thrive in high light and temperature environments.\n\nCAM plants, including many succulents, temporally separate CO2 uptake and fixation by opening stomata at night. This adaptation minimizes water loss, allowing survival in arid habitats while maintaining photosynthetic productivity.",
-      "quiz": {
-        "question": "What is a key adaptation of CAM plants?",
-        "options": ["They open stomata at night", "They lack chloroplasts", "They fix nitrogen instead of carbon", "They do not use the Calvin cycle"],
-        "answer": 0
-      }
-    }
-  }
-}
+  "nodeContent": {{
+    "AI": {{
+      "content": "Write an in-depth explanation of Artificial Intelligence (AI) that covers its definition, core goals, types (narrow vs general), real-world examples, ethical considerations, and current challenges in research. The paragraph should be comprehensive and informative.",
+      "quiz": [
+        {{
+          "question": "What distinguishes narrow AI from general AI?",
+          "options": [
+            "Narrow AI focuses on specific tasks; general AI performs any cognitive task",
+            "General AI is weaker than narrow AI",
+            "Narrow AI includes emotions",
+            "General AI only exists in theory"
+          ],
+          "answer": 0
+        }},
+        {{
+          "question": "Which of the following is an example of AI in everyday use?",
+          "options": [
+            "Voice assistants like Siri and Alexa",
+            "Manual typewriters",
+            "Analog clocks",
+            "Vacuum tubes"
+          ],
+          "answer": 0
+        }},
+        {{
+          "question": "What is one key ethical issue in AI?",
+          "options": [
+            "Lack of creativity",
+            "Job displacement and bias",
+            "Slow computation",
+            "Overuse of electricity"
+          ],
+          "answer": 1
+        }},
+        {{
+          "question": "Which subfield of AI focuses on decision-making and learning from data?",
+          "options": [
+            "Machine Learning",
+            "Cryptography",
+            "Quantum Computing",
+            "Network Security"
+          ],
+          "answer": 0
+        }},
+        {{
+          "question": "What is a primary challenge in creating general AI?",
+          "options": [
+            "Building machines that understand and reason like humans",
+            "Improving computer graphics",
+            "Reducing hardware costs",
+            "Translating code to multiple languages"
+          ],
+          "answer": 0
+        }}
+      ]
+    }},
+    "ML": {{
+      "content": "Provide a detailed explanation of Machine Learning, covering supervised, unsupervised, and reinforcement learning paradigms. Explain the importance of data, features, and model training processes. Discuss its applications in healthcare, finance, and recommendation systems.",
+      "quiz": [
+        {{
+          "question": "What defines supervised learning?",
+          "options": [
+            "Learning with labeled data",
+            "Learning without data",
+            "Learning by observation only",
+            "Learning using random guessing"
+          ],
+          "answer": 0
+        }},
+        {{
+          "question": "Which of these is an example of unsupervised learning?",
+          "options": [
+            "Clustering similar customers based on behavior",
+            "Training a model to classify images of cats and dogs",
+            "Predicting house prices from features",
+            "Detecting spam emails"
+          ],
+          "answer": 0
+        }},
+        {{
+          "question": "What is the goal of reinforcement learning?",
+          "options": [
+            "Maximize cumulative rewards through actions and feedback",
+            "Predict future weather",
+            "Reduce hardware costs",
+            "Memorize data points"
+          ],
+          "answer": 0
+        }},
+        {{
+          "question": "Which component is essential for training machine learning models?",
+          "options": [
+            "High-quality data",
+            "Random guesses",
+            "Manual rule writing",
+            "Fixed outcomes"
+          ],
+          "answer": 0
+        }},
+        {{
+          "question": "Which of the following best demonstrates ML in real life?",
+          "options": [
+            "Netflix recommending shows",
+            "Sending physical mail",
+            "Turning on lights manually",
+            "Calculating sums with a calculator"
+          ],
+          "answer": 0
+        }}
+      ]
+    }},
+    "DL": {{
+      "content": "Describe Deep Learning in depth, including how it differs from traditional ML, its architecture (layers, neurons, weights), and how neural networks learn using backpropagation. Discuss convolutional, recurrent, and transformer models, and their real-world uses.",
+      "quiz": [
+        {{
+          "question": "What makes deep learning different from traditional ML?",
+          "options": [
+            "It uses multiple layers of neural networks",
+            "It only works on text data",
+            "It requires no data",
+            "It is purely symbolic logic"
+          ],
+          "answer": 0
+        }},
+        {{
+          "question": "What is the purpose of backpropagation?",
+          "options": [
+            "To adjust weights and minimize loss",
+            "To increase the number of layers",
+            "To generate random predictions",
+            "To compress training data"
+          ],
+          "answer": 0
+        }},
+        {{
+          "question": "Which architecture is used primarily for image data?",
+          "options": [
+            "Convolutional Neural Network (CNN)",
+            "Recurrent Neural Network (RNN)",
+            "Transformer",
+            "Decision Tree"
+          ],
+          "answer": 0
+        }},
+        {{
+          "question": "Which deep learning model excels at sequence-based tasks like language?",
+          "options": [
+            "Recurrent Neural Network (RNN)",
+            "Convolutional Network",
+            "Linear Regression",
+            "Support Vector Machine"
+          ],
+          "answer": 0
+        }},
+        {{
+          "question": "What does a transformer model primarily use to understand context?",
+          "options": [
+            "Attention mechanism",
+            "Random sampling",
+            "Gradient descent only",
+            "Image convolution"
+          ],
+          "answer": 0
+        }}
+      ]
+    }}
+  }}
+}}
 
+Use the above example as to how to format your response, but use the below instructions for the content generation:
 
 Requirements:
 - Return ONLY valid JSON (no markdown, no prose before/after)
