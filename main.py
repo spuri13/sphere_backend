@@ -7,12 +7,15 @@ import json
 import requests
 import re
 
-
 app = FastAPI()
 
+# CORS configuration
 origins = [
     "https://hackpsu-five.vercel.app",
+    "https://hackpsu-git-main-aaravdaga-5997s-projects.vercel.app", 
+    "https://hackpsu-ndvo95ani-aaravdaga-5997s-projects.vercel.app",
     "http://localhost:3000",
+    "http://localhost:5173",
 ]
 
 app.add_middleware(
@@ -35,88 +38,57 @@ async def health():
 async def generate_graph(request: Request):
     try:
         data = await request.json()
-        topic = data.get("url")  # Frontend sends "url" field containing the topic
+        topic = data.get("url")  # Frontend sends "url" field
         
         if not topic:
-            return JSONResponse({"error": "Missing topic"}, status_code=400)
+            return JSONResponse({"error": "Missing topic in 'url' field"}, status_code=400)
        
-        print(f"Generating graph for topic: {topic}")
+        print(f"[API] Generating graph for topic: {topic}")
         
         # Generate the graph data
         result = get_children_nodes(topic)
        
         if result:
-            # Optional: Save to JSON file
-            output_file = f"graph_{topic.replace(' ', '_')}.json"
-            try:
-                with open(output_file, 'w') as f:
-                    json.dump(result, f, indent=2)
-                print(f"Saved graph to {output_file}")
-            except Exception as e:
-                print(f"Warning: Could not save to file: {e}")
+            print(f"[API] Successfully generated graph with {len(result.get('nodes', []))} nodes")
             return JSONResponse(result)
         else:
+            print("[API] Failed to generate graph - get_children_nodes returned None")
             return JSONResponse(
-                {"error": "Failed to generate graph data from AI"}, 
+                {"error": "Failed to generate graph data. The AI service may be unavailable or timed out."}, 
                 status_code=500
             )
    
     except Exception as e:
-        print(f"Error in generate_graph: {str(e)}")
+        print(f"[API] Error in generate_graph: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return JSONResponse({"error": str(e)}, status_code=500)
 
-@app.post("/api/info")
-async def get_info(request: Request):
-    info = await request.json()
-    url = info.get("url")
-    if not url:
-        return JSONResponse({"error": "Missing url"}, status_code=400)
-    return {"message": f"Received URL: {url}"}
-
-@app.post("/api/quiz")
-async def get_quiz(request: Request):
-    quiz = await request.json()
-    url = quiz.get("url")
-    if not url:
-        return JSONResponse({"error": "Missing url"}, status_code=400)
-    return {"message": f"Received URL: {url}"}
-
 def clean_ai_json(raw_text):
     """
-    Remove ```json and ``` wrappers if present.
+    Remove markdown wrappers and extract valid JSON.
     """
     raw_text = raw_text.strip()
+    
+    # Remove markdown code blocks
     if raw_text.startswith("```json"):
-        raw_text = raw_text[len("```json"):].strip()
+        raw_text = raw_text[7:].strip()
     elif raw_text.startswith("```"):
         raw_text = raw_text[3:].strip()
     if raw_text.endswith("```"):
         raw_text = raw_text[:-3].strip()
-    return raw_text
-
-
-def clean_ai_json(raw_text):
-    """
-    Remove markdown wrappers and extract the first valid JSON object.
-    """
-    raw_text = raw_text.strip()
-    if raw_text.startswith("```json"):
-        raw_text = raw_text[len("```json"):].strip()
-    elif raw_text.startswith("```"):
-        raw_text = raw_text[3:].strip()
-    if raw_text.endswith("```"):
-        raw_text = raw_text[:-3].strip()
-
-    # find the first {...} JSON block only
-    match = re.search(r"\{[\s\S]*\}", raw_text)
+    
+    # Find the first complete JSON object
+    match = re.search(r'\{[\s\S]*\}', raw_text)
     if match:
         return match.group(0)
+    
     return raw_text
 
 # Load environment variables
 possible_paths = [
     os.path.join(os.path.dirname(os.path.realpath(__file__)), ".env"),
-    os.path.join(os.getcwd(), ".env"),  
+    os.path.join(os.getcwd(), ".env"),
 ]
 
 dotenv_found = False
@@ -124,120 +96,84 @@ for path in possible_paths:
     if os.path.exists(path):
         load_dotenv(path)
         dotenv_found = True
-        print(f".env loaded from: {path}")
+        print(f"[INIT] .env loaded from: {path}")
         break
 
 if not dotenv_found:
-    print("Warning: .env file not found. Make sure it exists in the script folder or cwd.")
+    print("[INIT] Warning: .env file not found")
 
-API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+# Get API key from environment or hardcoded fallback
+API_KEY = os.getenv("OPENROUTER_API_KEY", "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")
+
 if not API_KEY:
-    raise ValueError(
-        "OPENROUTER_API_KEY not found. Ensure your .env contains:\nOPENROUTER_API_KEY=your_key_here"
-    )
+    raise ValueError("OPENROUTER_API_KEY not found")
+
+print(f"[INIT] API Key configured: {API_KEY[:20]}...")
 
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "deepseek/deepseek-chat-v3.1:free"
 
 def get_children_nodes(topic: str):
     """
-    Given a topic, generate nodes, links, and content for a mind map.
-    Returns a dictionary with 'nodes', 'links', and 'nodeContent'.
+    Generate nodes, links, and content for a mind map using DeepSeek API.
     """
-    prompt = f"""
-You are a helpful and knowledgeable study assistant generating detailed structured learning mind maps.
+    prompt = f"""Generate a learning mind map for the topic "{topic}".
 
-Given the topic "{topic}", create a **comprehensive JSON** that captures the topic hierarchy, in-depth content explanations, and quiz questions for each subtopic.
-
-Follow this exact structure — output only valid JSON, without Markdown or extra text:
+Return ONLY a valid JSON object (no markdown, no explanations) with this exact structure:
 
 {{
   "nodes": [
-    {{
-      "id": "AI",
-      "label": "Artificial Intelligence",
-      "level": 0,
-      "unlocked": true,
-      "quiz_completed": false
-    }},
-    {{
-      "id": "ML",
-      "label": "Machine Learning",
-      "level": 1,
-      "unlocked": true,
-      "quiz_completed": false
-    }},
-    {{
-      "id": "DL",
-      "label": "Deep Learning",
-      "level": 2,
-      "unlocked": false,
-      "quiz_completed": false
-    }}
+    {{"id": "node1", "label": "Main Topic", "level": 0, "unlocked": true, "quiz_completed": false}},
+    {{"id": "node2", "label": "Subtopic 1", "level": 1, "unlocked": true, "quiz_completed": false}},
+    {{"id": "node3", "label": "Subtopic 2", "level": 2, "unlocked": false, "quiz_completed": false}}
   ],
   "links": [
-    {{ "source": "AI", "target": "ML" }},
-    {{ "source": "ML", "target": "DL" }}
+    {{"source": "node1", "target": "node2"}},
+    {{"source": "node2", "target": "node3"}}
   ],
   "nodeContent": {{
-    "AI": {{
-      "content": "Artificial Intelligence (AI) is the simulation of human intelligence in machines. It encompasses narrow AI (task-specific systems like voice assistants) and general AI (hypothetical human-level intelligence). AI powers everyday tools like Siri and Alexa, recommendation systems, and autonomous vehicles. Key challenges include ethical concerns like bias and job displacement, privacy issues, and the difficulty of creating systems that can reason and understand context like humans.",
+    "node1": {{
+      "content": "Detailed explanation about the main topic (2-3 sentences covering key concepts, examples, and applications).",
       "quiz": {{
-        "question": "What distinguishes narrow AI from general AI?",
-        "options": [
-          "Narrow AI focuses on specific tasks; general AI performs any cognitive task",
-          "General AI is weaker than narrow AI",
-          "Narrow AI includes emotions",
-          "General AI only exists in theory"
-        ],
+        "question": "What is a key characteristic of this topic?",
+        "options": ["Option A", "Option B", "Option C", "Option D"],
         "answer": 0
       }}
     }},
-    "ML": {{
-      "content": "Machine Learning is a subset of AI that enables systems to learn from data without explicit programming. It includes supervised learning (learning from labeled data), unsupervised learning (finding patterns in unlabeled data), and reinforcement learning (learning through trial and error with rewards). ML requires high-quality data and feature engineering. Applications include healthcare diagnosis, financial fraud detection, and personalized recommendations in streaming services.",
+    "node2": {{
+      "content": "Detailed explanation about subtopic 1.",
       "quiz": {{
-        "question": "What defines supervised learning?",
-        "options": [
-          "Learning with labeled data",
-          "Learning without data",
-          "Learning by observation only",
-          "Learning using random guessing"
-        ],
+        "question": "Question about subtopic 1?",
+        "options": ["Option A", "Option B", "Option C", "Option D"],
         "answer": 0
       }}
     }},
-    "DL": {{
-      "content": "Deep Learning uses multi-layered neural networks to learn hierarchical representations of data. Unlike traditional ML, it automatically extracts features from raw data. Neural networks consist of layers of neurons with weighted connections that adjust through backpropagation. Key architectures include CNNs for image processing, RNNs for sequential data like text and speech, and Transformers that use attention mechanisms for understanding context in language tasks. Deep Learning powers applications like image recognition, language translation, and autonomous driving.",
+    "node3": {{
+      "content": "Detailed explanation about subtopic 2.",
       "quiz": {{
-        "question": "What makes deep learning different from traditional ML?",
-        "options": [
-          "It uses multiple layers of neural networks",
-          "It only works on text data",
-          "It requires no data",
-          "It is purely symbolic logic"
-        ],
+        "question": "Question about subtopic 2?",
+        "options": ["Option A", "Option B", "Option C", "Option D"],
         "answer": 0
       }}
     }}
   }}
 }}
 
-CRITICAL RULES:
-- Do NOT include ```json``` or any non-JSON text
-- Each node must have: id, label, level, unlocked, quiz_completed
-- Each nodeContent entry must have "content" (detailed paragraph) and "quiz" (single quiz object)
-- Each quiz must have: question (string), options (array of 4 strings), answer (integer 0-3)
-- The content must be in-depth, covering background, key ideas, and real-world examples
-- Create at least 3-5 nodes with proper hierarchy (level 0 is root)
-- Return ONLY valid JSON with no explanation or commentary
-"""
+Requirements:
+- Create 3-5 nodes minimum
+- Level 0 is the root (unlocked: true)
+- Level 1 nodes should be unlocked: true
+- Level 2+ nodes should be unlocked: false
+- Each node needs content (informative paragraph) and quiz (question with 4 options)
+- Answer must be integer 0-3 (index of correct option)
+- Return ONLY the JSON object, no other text"""
 
     headers = {
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json"
     }
 
-    data = {
+    payload = {
         "model": MODEL,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.6,
@@ -245,51 +181,77 @@ CRITICAL RULES:
     }
 
     try:
-        print(f"Calling OpenRouter API for topic: {topic}")
-        response = requests.post(API_URL, headers=headers, json=data, timeout=120)
+        print(f"[AI] Calling OpenRouter API for topic: {topic}")
+        print(f"[AI] Model: {MODEL}")
+        
+        response = requests.post(API_URL, headers=headers, json=payload, timeout=120)
+
+        print(f"[AI] Response status: {response.status_code}")
 
         if response.status_code != 200:
-            print(f"API Error: {response.status_code} - {response.text}")
+            print(f"[AI] API Error: {response.text}")
             return None
 
-        j = response.json()
-        raw_output = j["choices"][0]["message"]["content"]
-        print(f"Received response, cleaning JSON...")
+        response_json = response.json()
         
+        if "choices" not in response_json or len(response_json["choices"]) == 0:
+            print(f"[AI] Invalid response structure: {response_json}")
+            return None
+            
+        raw_output = response_json["choices"][0]["message"]["content"]
+        print(f"[AI] Raw response length: {len(raw_output)} chars")
+        print(f"[AI] First 200 chars: {raw_output[:200]}")
+        
+        # Clean the output
         cleaned_output = clean_ai_json(raw_output)
+        print(f"[AI] Cleaned output length: {len(cleaned_output)} chars")
        
-        # Parse and validate JSON
-        try:
-          result = json.loads(cleaned_output)
-        except json.JSONDecodeError as e:
-          print("Partial JSON detected, attempting recovery...")
-          first_json = cleaned_output.split("}\n")[0] + "}"
-          result = json.loads(first_json)
+        # Parse JSON
+        result = json.loads(cleaned_output)
         
         # Validate structure
-        if not all(key in result for key in ["nodes", "links", "nodeContent"]):
-            print("Error: Missing required keys in response")
+        required_keys = ["nodes", "links", "nodeContent"]
+        missing_keys = [key for key in required_keys if key not in result]
+        
+        if missing_keys:
+            print(f"[AI] Error: Missing required keys: {missing_keys}")
+            print(f"[AI] Available keys: {list(result.keys())}")
             return None
         
-        print(f"Successfully generated graph with {len(result['nodes'])} nodes")
+        # Validate nodes
+        if not result["nodes"] or len(result["nodes"]) == 0:
+            print("[AI] Error: No nodes in response")
+            return None
+            
+        print(f"[AI] ✓ Successfully generated graph:")
+        print(f"[AI]   - {len(result['nodes'])} nodes")
+        print(f"[AI]   - {len(result['links'])} links")
+        print(f"[AI]   - {len(result['nodeContent'])} content entries")
+        
         return result
         
     except requests.exceptions.Timeout:
-        print("Error: Request timed out")
+        print("[AI] Error: Request timed out after 120 seconds")
         return None
     except requests.exceptions.RequestException as e:
-        print(f"Error: Request failed - {str(e)}")
+        print(f"[AI] Error: Request failed - {str(e)}")
         return None
     except json.JSONDecodeError as e:
-        print(f"Failed to parse JSON: {e}")
-        print(f"Cleaned output:\n{cleaned_output[:500]}...")
+        print(f"[AI] Error: Failed to parse JSON - {str(e)}")
+        print(f"[AI] Attempted to parse: {cleaned_output[:500]}...")
         return None
     except Exception as e:
-        print(f"Unexpected error: {str(e)}")
+        print(f"[AI] Unexpected error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return None
 
 if __name__ == "__main__":
     import uvicorn
-    print("Starting StudySphere Backend Server...")
-    print(f"CORS enabled for: hackpsu-five.vercel.app")
+    print("="*60)
+    print("Starting StudySphere Backend Server")
+    print("="*60)
+    print(f"CORS enabled for: {', '.join(origins)}")
+    print(f"API Key: {API_KEY[:20]}...")
+    print("="*60)
     uvicorn.run(app, host="0.0.0.0", port=8000)
