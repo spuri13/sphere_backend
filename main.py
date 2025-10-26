@@ -103,7 +103,7 @@ print(f"[INIT] API Key configured: {API_KEY[:20]}...")
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "qwen/qwen-2.5-72b-instruct:free"
 
-def call_ai(prompt, max_tokens=4000):
+def call_ai(prompt, max_tokens=15000):
     """Helper function to call AI API with robust error handling."""
     headers = {
         "Authorization": f"Bearer {API_KEY}",
@@ -213,7 +213,7 @@ REQUIREMENTS:
 - Logical hierarchy
 - NO backslashes anywhere"""
 
-        result = call_ai(prompt, max_tokens=3000)
+        result = call_ai(prompt, max_tokens=15000)
         
         if not result or "nodes" not in result or "links" not in result:
             return JSONResponse({"error": "Failed to generate structure"}, status_code=500)
@@ -250,7 +250,7 @@ CRITICAL INSTRUCTIONS:
 2. Do NOT use backslashes anywhere in your response
 3. Use plain apostrophes and quotes without escaping
 4. Use simple language without special characters
-5. Each content entry should be 4-6 paragraphs
+5. For each topic, there must be 3-5 paragraphs of an explanation to help the user learn about the topic
 6. Each paragraph should be 4-5 sentences
 
 Example format:
@@ -263,7 +263,7 @@ Example format:
 
 Remember: NO backslashes, NO escape sequences, just plain text in proper JSON format."""
 
-        result = call_ai(prompt, max_tokens=8000)
+        result = call_ai(prompt, max_tokens=15000)
         
         if not result:
             # Retry with even simpler prompt
@@ -276,7 +276,7 @@ Return valid JSON with NO backslashes:
 
 Use only plain text."""
             
-            result = call_ai(simple_prompt, max_tokens=6000)
+            result = call_ai(simple_prompt, max_tokens=15000)
         
         if not result or "nodeContent" not in result:
             return JSONResponse({"error": "Failed to generate content after retry"}, status_code=500)
@@ -348,7 +348,7 @@ REQUIREMENTS:
 - Use plain text only, no backslashes or escape characters
 - Return ONLY the JSON object"""
 
-        result = call_ai(prompt, max_tokens=6000)
+        result = call_ai(prompt, max_tokens=15000)
         
         if not result:
             # Retry with simpler prompt
@@ -361,7 +361,7 @@ Return valid JSON without backslashes:
 
 Use plain text only."""
             
-            result = call_ai(simple_prompt, max_tokens=4000)
+            result = call_ai(simple_prompt, max_tokens=15000)
         
         if not result or "nodeQuizzes" not in result:
             return JSONResponse({"error": "Failed to generate quizzes after retry"}, status_code=500)
