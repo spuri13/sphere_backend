@@ -14,13 +14,17 @@ origins = [
     "https://hackpsu-five.vercel.app",
     "https://hackpsu-git-main-aaravdaga-5997s-projects.vercel.app", 
     "https://hackpsu-ndvo95ani-aaravdaga-5997s-projects.vercel.app",
+    "https://hackpsu-five.vercel.app",
+    "https://hackpsu-aaravdaga-5997s-projects.vercel.app"
+    "https://hackpsu-git-main-aaravdaga-5997s-projects.vercel.app",
+    "https://hackpsu-aj1y0cag4-aaravdaga-5997s-projects.vercel.app",
     "http://localhost:3000",
     "http://localhost:5173",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
